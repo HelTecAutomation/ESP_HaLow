@@ -38,7 +38,7 @@ void setup() {
   Serial.begin(115200);
   HaLow.onEvent(HaLowEvent);
   HaLow.init("US");
-  HaLow.begin("MorseMicro2","123456789");
+  HaLow.begin("HT-H7608","123456789");
   Serial.println("Wait for Halow... ");
 }
 

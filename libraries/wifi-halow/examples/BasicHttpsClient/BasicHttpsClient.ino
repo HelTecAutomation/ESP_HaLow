@@ -9,7 +9,7 @@
 #include <HalowHTTPClient.h>
 #include <HaLow.h>
 
-const char* ssid     = "MorseMicro2";
+const char* ssid     = "HT-H7608";
 const char* password = "123456789";
 
 const char* rootCACertificate = \

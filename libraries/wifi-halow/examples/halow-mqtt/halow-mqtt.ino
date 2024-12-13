@@ -143,21 +143,11 @@ void setup() {
     HaLow.config(IPAddress(192,168,0,208),IPAddress(192,168,0,1),IPAddress(255,255,255,0));
     HaLow.setDNS(IPAddress(114,114,114,114),IPAddress(192,168,0,1));
     HaLow.init();
-    HaLow.begin("MorseMicro2","123456789");
+    HaLow.begin("HT-H7608","123456789");
     Serial.println(HaLow.macAddress());
     HaLow.macAddress(mac);
     Serial.printf("%02X:%02X:%02X:%02X:%02X:%02X\r\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     /* Initialize and connect to WiFi, blocks till connected */
-//    app_wlan_init();
-//    uint8_t  mac_test[6]={0,1,2,3,4,5};
-//    mmhal_read_mac_addr(mac_test);
-//    Serial.printf("%02X %02X %02X %02X %02X %02X \r\n",mac_test[0],mac_test[1],mac_test[2],mac_test[3],mac_test[4],mac_test[5]);
-//    app_wlan_start();
-//    mmhal_read_mac_addr(mac_test);
-//    Serial.printf("%02X %02X %02X %02X %02X %02X \r\n",mac_test[0],mac_test[1],mac_test[2],mac_test[3],mac_test[4],mac_test[5]);
-    
-//    WiFi.mode(WIFI_AP);
-//    WiFi.softAP("ESP32-Halow-test","12345678");
 
   mqttReconnectTimer = xTimerCreate("mqttTimer", pdMS_TO_TICKS(2000), pdFALSE, (void*)0, reinterpret_cast<TimerCallbackFunction_t>(connectToMqtt));
 

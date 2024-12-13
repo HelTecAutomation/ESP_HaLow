@@ -7,7 +7,7 @@
 #include <WebServer.h>
 #include <Update.h>
 
-const char* ssid     = "HT-ESP32_Test";
+const char* ssid     = "HT-H7608";
 const char* password = "123456789";
 
 WebServer server(80);

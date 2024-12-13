@@ -8,7 +8,7 @@
 #include <HaLow.h>
 #include "sd_read_write.h"
 
-const char* ssid     = "MorseMicro2";
+const char* ssid     = "HT-H7608";
 const char* password = "123456789";
 void cameraInit(void);
 void startCameraServer();

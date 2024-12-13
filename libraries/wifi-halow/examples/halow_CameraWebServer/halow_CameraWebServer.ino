@@ -20,7 +20,7 @@
 // Enter your Halow credentials
 // ===========================
 
-const char* ssid     = "MorseMicro2";
+const char* ssid     = "HT-H7608";
 const char* password = "123456789";
 
 ESP_EVENT_DECLARE_BASE(ESP_HTTP_SERVER_EVENT);
