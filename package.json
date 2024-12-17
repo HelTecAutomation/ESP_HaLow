@@ -1,0 +1,19 @@
+{
+  "name": "framework-arduinoespressif32",
+  "version": "3.0.0",
+  "description": "Arduino Framework for the ESP32_Wi-FiHaLow_Camera.",
+  "keywords": [
+    "framework",
+    "arduino",
+    "espressif",
+    "esp32",
+    "Wi-Fi HaLow",
+    "Camera",
+    "HT-HC32"
+  ],
+  "license": "LGPL-2.1-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/espressif/arduino-esp32"
+  }
+}
