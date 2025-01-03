@@ -67,59 +67,59 @@
           "systems": [
             {
               "host": "i686-mingw32",
-              "url": "https://codeload.github.com/espressif/esp32-arduino-libs/zip/2c6907b9e2b6ff8d7d47c93d622827575190b806",
+              "url": "https://resource.heltec.cn/download/esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
               "archiveFileName": "esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
-              "checksum": "SHA-256:33998f3ba0cf1080ef6a3c70d477b9d535944191a045f9078d427ee5e79afbe1",
-              "size": "352415499"
+              "checksum": "SHA-256:37a2f62bb22939f9660caaef56fd8d3c2e4efc77a9c0cfd339eecac88485149f",
+              "size": "74732961"
             },
             {
               "host": "x86_64-mingw32",
-              "url": "https://codeload.github.com/espressif/esp32-arduino-libs/zip/2c6907b9e2b6ff8d7d47c93d622827575190b806",
+              "url": "https://resource.heltec.cn/download/esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
               "archiveFileName": "esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
-              "checksum": "SHA-256:33998f3ba0cf1080ef6a3c70d477b9d535944191a045f9078d427ee5e79afbe1",
-              "size": "352415499"
+              "checksum": "SHA-256:37a2f62bb22939f9660caaef56fd8d3c2e4efc77a9c0cfd339eecac88485149f",
+              "size": "74732961"
             },
             {
               "host": "arm64-apple-darwin",
-              "url": "https://codeload.github.com/espressif/esp32-arduino-libs/zip/2c6907b9e2b6ff8d7d47c93d622827575190b806",
+              "url": "https://resource.heltec.cn/download/esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
               "archiveFileName": "esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
-              "checksum": "SHA-256:33998f3ba0cf1080ef6a3c70d477b9d535944191a045f9078d427ee5e79afbe1",
-              "size": "352415499"
+              "checksum": "SHA-256:37a2f62bb22939f9660caaef56fd8d3c2e4efc77a9c0cfd339eecac88485149f",
+              "size": "74732961"
             },
             {
               "host": "x86_64-apple-darwin",
-              "url": "https://codeload.github.com/espressif/esp32-arduino-libs/zip/2c6907b9e2b6ff8d7d47c93d622827575190b806",
+              "url": "https://resource.heltec.cn/download/esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
               "archiveFileName": "esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
-              "checksum": "SHA-256:33998f3ba0cf1080ef6a3c70d477b9d535944191a045f9078d427ee5e79afbe1",
-              "size": "352415499"
+              "checksum": "SHA-256:37a2f62bb22939f9660caaef56fd8d3c2e4efc77a9c0cfd339eecac88485149f",
+              "size": "74732961"
             },
             {
               "host": "x86_64-pc-linux-gnu",
-              "url": "https://codeload.github.com/espressif/esp32-arduino-libs/zip/2c6907b9e2b6ff8d7d47c93d622827575190b806",
+              "url": "https://resource.heltec.cn/download/esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
               "archiveFileName": "esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
-              "checksum": "SHA-256:33998f3ba0cf1080ef6a3c70d477b9d535944191a045f9078d427ee5e79afbe1",
-              "size": "352415499"
+              "checksum": "SHA-256:37a2f62bb22939f9660caaef56fd8d3c2e4efc77a9c0cfd339eecac88485149f",
+              "size": "74732961"
             },
             {
               "host": "i686-pc-linux-gnu",
-              "url": "https://codeload.github.com/espressif/esp32-arduino-libs/zip/2c6907b9e2b6ff8d7d47c93d622827575190b806",
+              "url": "https://resource.heltec.cn/download/esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
               "archiveFileName": "esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
-              "checksum": "SHA-256:33998f3ba0cf1080ef6a3c70d477b9d535944191a045f9078d427ee5e79afbe1",
-              "size": "352415499"
+              "checksum": "SHA-256:37a2f62bb22939f9660caaef56fd8d3c2e4efc77a9c0cfd339eecac88485149f",
+              "size": "74732961"
             },
             {
               "host": "aarch64-linux-gnu",
-              "url": "https://codeload.github.com/espressif/esp32-arduino-libs/zip/2c6907b9e2b6ff8d7d47c93d622827575190b806",
+              "url": "https://resource.heltec.cn/download/esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
               "archiveFileName": "esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
-              "checksum": "SHA-256:33998f3ba0cf1080ef6a3c70d477b9d535944191a045f9078d427ee5e79afbe1",
-              "size": "352415499"
+              "checksum": "SHA-256:37a2f62bb22939f9660caaef56fd8d3c2e4efc77a9c0cfd339eecac88485149f",
+              "size": "74732961"
             },
             {
               "host": "arm-linux-gnueabihf",
-              "url": "https://codeload.github.com/espressif/esp32-arduino-libs/zip/2c6907b9e2b6ff8d7d47c93d622827575190b806",
+              "url": "https://resource.heltec.cn/download/esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
               "archiveFileName": "esp32-arduino-libs-2c6907b9e2b6ff8d7d47c93d622827575190b806.zip",
-              "checksum": "SHA-256:33998f3ba0cf1080ef6a3c70d477b9d535944191a045f9078d427ee5e79afbe1",
-              "size": "352415499"
+              "checksum": "SHA-256:37a2f62bb22939f9660caaef56fd8d3c2e4efc77a9c0cfd339eecac88485149f",
+              "size": "74732961"
             }
           ]
         },
