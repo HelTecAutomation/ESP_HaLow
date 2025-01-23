@@ -13,7 +13,7 @@ const char* password = "123456789";
 void cameraInit(void);
 void startCameraServer();
 
-#define LED 20
+#define LED 19
 
 void setup() {
   Serial.begin(115200);
