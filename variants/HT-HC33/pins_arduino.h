@@ -80,9 +80,9 @@ static const uint8_t T12 = 12;
 static const uint8_t T13 = 13;
 static const uint8_t T14 = 14;
 
-static const uint8_t LED  = 19;
+static const uint8_t RGB  = 19;
 
-#define PWDN_GPIO_NUM -1
+#define PWDN_GPIO_NUM 20
 #define RESET_GPIO_NUM -1
 #define XCLK_GPIO_NUM 47
 #define SIOD_GPIO_NUM 45
