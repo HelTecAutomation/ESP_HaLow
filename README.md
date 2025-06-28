@@ -50,7 +50,7 @@ Also you can talk in our forum: [http://community.heltec.cn/](http://community.h
 
 ## 简体中文
 
-由Heltec Automation制作的nRF52系列的Arduino源代码和工具链，包含一些基础代码，TFT和LoRa/LoRaWAN等相关示例。
+由Heltec Automation制作的ESP32S3 Wifi Halow系列的Arduino源代码和工具链，包含一些基础代码、相关示例。
 
 ## 内容
 
@@ -62,7 +62,7 @@ Also you can talk in our forum: [http://community.heltec.cn/](http://community.h
 
 ## 说明
 
-下表列出了Heltec基于nRF芯片的产品型号：
+下表列出了Heltec基于ESP32S3芯片的产品型号：
 
 |   MCU   |                       Relative boards                        |
 | :-----: | :----------------------------------------------------------- |
@@ -76,15 +76,11 @@ Also you can talk in our forum: [http://community.heltec.cn/](http://community.h
 - [Linux操作系统(debian,ubuntu) -- 安装方法](InstallGuide/debian_ubuntu.md)
 - [Linux操作系统(fedora) -- 安装方法](InstallGuide/fedora.md)
 
-## 编码规则
-
-可以参考这篇文章来了解Arduino的插件和编码规则：[EspExceptionDecoder](https://github.com/me-no-dev/EspExceptionDecoder).
-
 ## 问题讨论 & BUG报告
 
 在报告BUG之前，请先做详细的测试，如果问题真的存在，您可以通过以下方式报告或者讨论：
 
-- [GitHub问题报告页](https://github.com/HelTecAutomation/Heltec_nRF52/issues)
+- [GitHub问题报告页](https://github.com/HelTecAutomation/ESP_HaLow/issues)
 - [Heltec论坛 (仅英语交流)](http://community.heltec.cn/)
 
 ## 联系我们
