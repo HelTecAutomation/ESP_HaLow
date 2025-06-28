@@ -22,7 +22,7 @@ uint8_t rx_buff[2048];
 uint8_t tx_buff[2048];
 uint32_t last_send_udp_time=0;
 
-#define TEST_UDP_MESSAGE "udp message by cycle wake up"
+#define TEST_UDP_MESSAGE "cycle udp message\r\n"
 void HaLowEvent(HaLowEvent_t event)
 {
     Serial.printf("[HaLow-event] event: %d\r\n", event);
@@ -123,6 +123,7 @@ void loop()
         Udp.beginPacket(SERVER_ADDR, SERVER_PORT);
         Udp.write((uint8_t *)TEST_UDP_MESSAGE,strlen(TEST_UDP_MESSAGE));
         Udp.endPacket();
+        delay(1);//delay avoid into sleep before data transmit to halow modue
         last_send_udp_time+=SEND_UDP_INTERVAL;
       }
 
