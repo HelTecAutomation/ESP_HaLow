@@ -6,3 +6,4 @@ tools/mkspiffs
 tools/openocd-esp32
 tools/xtensa-esp32s3-elf
 tools/esp32-arduino-libs.zip
+tools/dist
