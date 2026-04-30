@@ -37,6 +37,13 @@ const char* rootCACertificate = \
 
 void setup() {
   Serial.begin(115200);
+  
+#ifdef HT-RC3268
+  //enable WiFiHalow LDO
+  pinMode(HALOW_LDO_CTRL,OUTPUT);
+  digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
+#endif
+
   HaLow.init("US");
   HaLow.begin(ssid, password);
   

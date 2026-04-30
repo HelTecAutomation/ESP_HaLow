@@ -16,6 +16,13 @@ const char* serverIndex = "<form method='POST' action='/update' enctype='multipa
 void setup(void) {
   Serial.begin(115200);
   Serial.println("web update example");
+  
+#ifdef HT-RC3268
+  //enable WiFiHalow LDO
+  pinMode(HALOW_LDO_CTRL,OUTPUT);
+  digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
+#endif
+
   HaLow.init("US");
   HaLow.begin(ssid, password);
 

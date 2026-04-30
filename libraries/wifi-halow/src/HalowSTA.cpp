@@ -171,7 +171,7 @@ wl_status_t HalowSTAClass::begin(const char* ssid, const char *passphrase, mmwla
 
 
 
-
+//mmwlan_set_power_save_mode(MMWLAN_PS_DISABLED);
 
 
 //	_status = mmwlan_get_version(&version);
@@ -261,7 +261,7 @@ IPAddress HalowSTAClass::localIP()
 {
   if (status() != WL_CONNECTED)
     return IPAddress();
-  return IPAddress(lwip_mmnetif.ip_addr.u_addr.ip4.addr);
+  return IPAddress(mmipal_data.lwip_mmnetif.ip_addr.u_addr.ip4.addr);
 }
 
 
@@ -297,7 +297,7 @@ IPAddress HalowSTAClass::subnetMask()
 {
   if (status() != WL_CONNECTED)
     return IPAddress();
-  return IPAddress(lwip_mmnetif.netmask.u_addr.ip4.addr);
+  return IPAddress(mmipal_data.lwip_mmnetif.netmask.u_addr.ip4.addr);
 }
 
 /**
@@ -308,7 +308,7 @@ IPAddress HalowSTAClass::gatewayIP()
 {
   if (status() != WL_CONNECTED)
     return IPAddress();
-  return IPAddress(lwip_mmnetif.gw.u_addr.ip4.addr);
+  return IPAddress(mmipal_data.lwip_mmnetif.gw.u_addr.ip4.addr);
 }
 
 
@@ -423,3 +423,18 @@ int8_t HalowSTAClass::RSSI(void)
 
 //HalowSTAClass HaLow;
 
+
+void debug_uart_flush()
+{
+  Serial.flush();
+}
+
+uint8_t debug_uart_read()
+{
+  return Serial.read();
+}
+
+int debug_uart_available()
+{
+  return Serial.available();
+}

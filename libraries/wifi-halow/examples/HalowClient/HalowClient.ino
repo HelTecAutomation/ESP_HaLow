@@ -1,7 +1,7 @@
 #include <HaLow.h>
 
-const char* ssid     = "HT-H7608";
-const char* password = "123456789";
+const char* ssid     = "HT-HR01-FE8F";
+const char* password = "heltec.org";
 const char* host     = "www.baidu.com";
 const char* url      = "/index.html";
 IPAddress hostIP;
@@ -12,6 +12,12 @@ void setup()
 
   Serial.print("Connecting to ");
   Serial.println(ssid);
+  
+#ifdef HT-RC3268
+  //enable WiFiHalow LDO
+  pinMode(HALOW_LDO_CTRL,OUTPUT);
+  digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
+#endif
 
   HaLow.init("US");
   HaLow.begin(ssid, password);

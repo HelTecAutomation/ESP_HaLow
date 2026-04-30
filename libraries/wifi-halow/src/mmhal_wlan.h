@@ -22,18 +22,19 @@
  *
  * @{
  */
-
-#pragma once
+#ifndef __MMHAL_WLAN__
+#define __MMHAL_WLAN__
 #include "halow_config.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
+#include "mmpkt.h"
+#include "mmwlan.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**
  * Function prototype for interrupt handler callbacks.
@@ -279,6 +280,18 @@ void mmhal_wlan_spi_write_buf(const uint8_t *buf, unsigned len);
 void mmhal_wlan_hard_reset(void);
 
 /**
+ * Invoked by the driver to check whether the external crystal initialization sequence is required.
+ *
+ * Implementation of this function is optional if the external crystal initialization sequence
+ * is not required. If this function is not implemented then the external crystal initialization
+ * sequence will be disabled. Refer to the data sheet for your module to check if this initialization
+ * is required.
+ *
+ * @returns true if the external crystal initialization sequence is required else false.
+ */
+bool mmhal_wlan_ext_xtal_init_is_required(void);
+
+/**
  * Issue the training sequence required to put the transceiver into SPI mode.
  */
 void mmhal_wlan_send_training_seq(void);
@@ -319,8 +332,86 @@ bool mmhal_wlan_spi_irq_is_asserted(void);
  */
 void mmhal_wlan_clear_spi_irq(void);
 
-/** @} */
 
+/**
+ * Flow control callback that can be invoked by the transmit packet memory manager to pause
+ * and resume the data path in response to resource availability.
+ *
+ * @param state Current flow control state.
+ */
+typedef void (*mmhal_wlan_pktmem_tx_flow_control_cb_t)(enum mmwlan_tx_flow_control_state state);
+
+/** Initialization arguments passed to @ref mmhal_wlan_pktmem_init().  */
+struct mmhal_wlan_pktmem_init_args
+{
+    /** Flow control callback that can be used by the transmit packet memory manager. */
+    mmhal_wlan_pktmem_tx_flow_control_cb_t tx_flow_control_cb;
+};
+
+/**
+ * Invoked by the driver to initialize the packet memory in the HAL.
+ *
+ * @param args  Initialization arguments.
+ */
+void mmhal_wlan_pktmem_init(struct mmhal_wlan_pktmem_init_args *args);
+
+/**
+ * Invoked by the driver to deinitialize the packet memory in the HAL.
+ *
+ * This can free reserved memory and check for memory leaks.
+ */
+void mmhal_wlan_pktmem_deinit(void);
+
+/**
+ * Enumeration of packet classes used by @ref mmhal_wlan_alloc_mmpkt_for_tx().
+ * These definitions must match the corresponding values in @c mmdrv_pkt_class.
+ */
+enum mmhal_wlan_pkt_class
+{
+    MMHAL_WLAN_PKT_DATA_TID0,       /**< Data TID0 */
+    MMHAL_WLAN_PKT_DATA_TID1,       /**< Data TID1 */
+    MMHAL_WLAN_PKT_DATA_TID2,       /**< Data TID2 */
+    MMHAL_WLAN_PKT_DATA_TID3,       /**< Data TID3 */
+    MMHAL_WLAN_PKT_DATA_TID4,       /**< Data TID4 */
+    MMHAL_WLAN_PKT_DATA_TID5,       /**< Data TID5 */
+    MMHAL_WLAN_PKT_DATA_TID6,       /**< Data TID6 */
+    MMHAL_WLAN_PKT_DATA_TID7,       /**< Data TID7 */
+    MMHAL_WLAN_PKT_MANAGEMENT,      /**< 802.11 Management and other important frames */
+    MMHAL_WLAN_PKT_COMMAND,         /**< Commands from driver to chip */
+};
+
+/**
+ * Allocates an mmpkt for transmission.
+ *
+ * When the pool of mmpkt buffers available for TX is exhausted, the HAL should pause the TX
+ * path using the flow control callback that was registered when @ref mmhal_wlan_pktmem_init()
+ * was invoked. Similarly, when the buffers become available again (and assuming the TX path is
+ * not otherwise blocked) the driver should unpause the TX path.
+ *
+ * @param pkt_class         The class of packet (to allow for prioritization).
+ * @param space_at_start    Amount of space to allocate at start of mmpkt (for prepend).
+ * @param space_at_end      Amount of space to allocate at end of mmpkt (for append).
+ * @param metadata_length   Amount of space to allocate for metadata (used internally by the
+ *                          Morse driver).
+ *
+ * @returns a pointer to the allocated packet on success or @c NULL on allocation failure.
+ */
+struct mmpkt *mmhal_wlan_alloc_mmpkt_for_tx(uint8_t pkt_class,
+                                            uint32_t space_at_start, uint32_t space_at_end,
+                                            uint32_t metadata_length);
+
+/**
+ * Allocates an mmpkt for reception.
+ *
+ * @param capacity          Amount of space to allocate for data.
+ * @param metadata_length   Amount of space to allocate for metadata (used internally by the
+ *                          Morse driver).
+ *
+ * @returns a pointer to the allocated packet on success or @c NULL on allocation failure.
+ */
+struct mmpkt *mmhal_wlan_alloc_mmpkt_for_rx(uint32_t capacity, uint32_t metadata_length);
+
+/** @} */
 
 /**
  * @defgroup MMHAL_WLAN_SDIO WLAN HAL API for SDIO interface
@@ -547,9 +638,10 @@ static inline uint32_t mmhal_make_cmd53_arg(enum mmhal_sdio_rw rw, enum mmhal_sd
 
 /** @} */
 
-
+void wlan_hal_spi_deinit(void);
 #ifdef __cplusplus
 }
 #endif
 
+#endif
 /** @} */

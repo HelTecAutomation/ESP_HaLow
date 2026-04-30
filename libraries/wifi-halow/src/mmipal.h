@@ -73,6 +73,8 @@ enum mmipal_addr_mode
     MMIPAL_DHCP,
     /** IP address allocated via AutoIP. @c LWIP_DHCP must be set to 1 if using LWIP. */
     MMIPAL_AUTOIP,
+    /** DHCP offloaded to chip. */
+    MMIPAL_DHCP_OFFLOAD,
 };
 
 /** IP address string type. */
@@ -164,6 +166,10 @@ struct mmipal_init_args
     enum mmipal_ip6_addr_mode ip6_mode;
     /** IPv6 address to use (if @c ip6_mode is @c MMIPAL_IP6_STATIC). */
     mmipal_ip_addr_t ip6_addr;
+    /** Flag requesting ARP response offload feature */
+    bool offload_arp_response;
+    /** ARP refresh offload interval in seconds */
+    uint32_t offload_arp_refresh_s;
 };
 
 /**
@@ -171,7 +177,7 @@ struct mmipal_init_args
  * @ref mmipal_init_args structure.
  */
 #define MMIPAL_INIT_ARGS_DEFAULT   { MMIPAL_DHCP, { 0 }, { 0 }, { 0 }, \
-                                     MMIPAL_IP6_DISABLED, { 0 } }
+                                     MMIPAL_IP6_DISABLED, { 0 }, false, 0 }
 
 /**
  * Initialize the IP stack and enable the MMWLAN interface.
@@ -218,10 +224,38 @@ typedef void (*mmipal_link_status_cb_fn_t)(const struct mmipal_link_status *link
  * This will be used when DHCP is enabled.
  *
  * @note This is for IPv4 only. To get IPv6 status use @c mmipal_get_ip6_config.
+ * @note If an opaque argument is required then use @ref mmipal_set_ext_link_status_callback()
+ *       instead.
  *
  * @param fn  Function pointer to the callback function.
  */
 void mmipal_set_link_status_callback(mmipal_link_status_cb_fn_t fn);
+
+/**
+ * Prototype for callback function invoked on link status changes.
+ *
+ * This is similar to @ref mmipal_link_status_cb_fn_t but with the addition of the @p arg
+ * parameter.
+ *
+ * @param link_status   The current link status.
+ * @param arg           Opaque argument that was provided when the callback was registered.
+ */
+typedef void (*mmipal_ext_link_status_cb_fn_t)(const struct mmipal_link_status *link_status,
+                                               void *arg);
+
+/**
+ * Sets the extended link status callback function to be invoked on link status changes.
+ * This is similar to @ref mmipal_set_link_status_callback() with the exception that
+ * an opaque argument may also be specified.
+ *
+ * This will be used when DHCP is enabled.
+ *
+ * @note This is for IPv4 only. To get IPv6 status use @c mmipal_get_ip6_config.
+ *
+ * @param fn    Function pointer to the callback function.
+ * @param arg   Opaque argument to be passed to the callback.
+ */
+void mmipal_set_ext_link_status_callback(mmipal_ext_link_status_cb_fn_t fn, void *arg);
 
 /**
  * Get the total number of transmitted and received packets on the MMWLAN interface

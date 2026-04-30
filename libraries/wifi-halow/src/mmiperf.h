@@ -69,6 +69,8 @@ enum mmiperf_report_type
     MMIPERF_UDP_DONE_SERVER,
     /** The client side test is done */
     MMIPERF_UDP_DONE_CLIENT,
+    /** Interrim report requested via @ref mmiperf_get_interim_report(). */
+    MMIPERF_INTERRIM_REPORT,
 };
 
 /** Enumeration of traffic agent state. */
@@ -113,12 +115,23 @@ struct mmiperf_report
     uint32_t duration_ms;
     /** Average throughput in kbps. */
     uint32_t bandwidth_kbitpsec;
-    /** Number of frames transmitted during test. */
-    uint16_t tx_frames;
-    /** Number of frames received during test. */
-    uint16_t rx_frames;
-    /** Number of out of sequence frames received during test. */
-    uint16_t out_of_sequence_frames;
+    /** Number of frames transmitted during test (UDP only). */
+    uint32_t tx_frames;
+    /** Number of frames received during test (UDP only). */
+    uint32_t rx_frames;
+    /** Number of out of sequence frames received during test (UDP only). */
+    uint32_t out_of_sequence_frames;
+    /** Number of packet errors (UDP only). */
+    uint32_t error_count;
+    /** Number of inter-packet gaps (UDP only). */
+    uint32_t ipg_count;
+    /**
+     * Sum of inter-packet gaps (UDP only).
+     *
+     * @note That this is not strictly the inter-packet gap, but rather the gap between
+     *       packet start times.
+     */
+    uint32_t ipg_sum_ms;
 };
 
 /**
@@ -238,6 +251,19 @@ mmiperf_handle_t mmiperf_start_tcp_client(const struct mmiperf_client_args *args
  * @returns a handle to the server on success, or @c NULL on failure.
  */
 mmiperf_handle_t mmiperf_start_tcp_server(const struct mmiperf_server_args *args);
+
+/**
+ * Retrieve report for an in progress iperf session.
+ *
+ * This shall not be called after the report callback has been received for the given
+ * session.
+ *
+ * @param handle    Handle to the iperf session to retrieve the report for.
+ * @param report    Pointer to a report instance to receive the report.
+ *
+ * @returns @c true on success or @c false on error (e.g., the handle was invalid).
+ */
+bool mmiperf_get_interim_report(mmiperf_handle_t handle, struct mmiperf_report *report);
 
 #ifdef __cplusplus
 }

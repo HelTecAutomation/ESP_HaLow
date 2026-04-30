@@ -142,6 +142,15 @@ void setup() {
     HaLow.onEvent(HaLowEvent);
     HaLow.config(IPAddress(192,168,0,208),IPAddress(192,168,0,1),IPAddress(255,255,255,0));
     HaLow.setDNS(IPAddress(114,114,114,114),IPAddress(192,168,0,1));
+    
+  
+#ifdef HT-RC3268
+  //enable WiFiHalow LDO
+  pinMode(HALOW_LDO_CTRL,OUTPUT);
+  digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
+#endif
+
+
     HaLow.init();
     HaLow.begin("HT-H7608","123456789");
     Serial.println(HaLow.macAddress());

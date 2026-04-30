@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mmhal.h"
 #include "mmport.h"
 
 #ifdef __cplusplus

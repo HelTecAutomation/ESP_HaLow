@@ -312,7 +312,7 @@ void mmosal_task_notify_from_isr(struct mmosal_task *task)
 struct mmosal_mutex *mmosal_mutex_create(const char *name)
 {
     struct mmosal_mutex *mutex = (struct mmosal_mutex *)xSemaphoreCreateMutex();
-#if (configUSE_TRACE_FACILITY == 1)
+#if (configUSE_TRACE_FACILITY == 1) && defined(ENABLE_TRACEALYZER) && ENABLE_TRACEALYZER
     if (name != NULL)
     {
         vTraceSetMutexName(mutex, name);
@@ -357,7 +357,7 @@ struct mmosal_sem *mmosal_sem_create(unsigned max_count, unsigned initial_count,
 {
     struct mmosal_sem *sem =
             (struct mmosal_sem *)xSemaphoreCreateCounting(max_count, initial_count);
-#if (configUSE_TRACE_FACILITY == 1)
+#if (configUSE_TRACE_FACILITY == 1) && defined(ENABLE_TRACEALYZER) && ENABLE_TRACEALYZER
     if (name != NULL)
     {
         vTraceSetSemaphoreName(sem, name);
@@ -415,7 +415,7 @@ uint32_t mmosal_sem_get_count(struct mmosal_sem *sem)
 struct mmosal_semb *mmosal_semb_create(const char *name)
 {
     struct mmosal_semb *semb = (struct mmosal_semb *)xSemaphoreCreateBinary();
-#if (configUSE_TRACE_FACILITY == 1)
+#if (configUSE_TRACE_FACILITY == 1) && defined(ENABLE_TRACEALYZER) && ENABLE_TRACEALYZER
     if (name != NULL)
     {
         vTraceSetSemaphoreName(semb, name);
@@ -466,7 +466,7 @@ bool mmosal_semb_wait(struct mmosal_semb *semb, uint32_t timeout_ms)
 struct mmosal_queue *mmosal_queue_create(size_t num_items, size_t item_size, const char *name)
 {
     struct mmosal_queue *queue = (struct mmosal_queue *)xQueueCreate(num_items, item_size);
-#if (configUSE_TRACE_FACILITY == 1)
+#if (configUSE_TRACE_FACILITY == 1) && defined(ENABLE_TRACEALYZER) && ENABLE_TRACEALYZER
     if (name != NULL)
     {
         vTraceSetQueueName(queue, name);

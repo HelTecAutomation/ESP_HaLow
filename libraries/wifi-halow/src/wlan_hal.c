@@ -62,6 +62,13 @@ static void wlan_hal_gpio_init(void)
     pinMode(CONFIG_MM_SPI_CS,OUTPUT);
     pinMode(CONFIG_MM_BUSY,INPUT);
     pinMode(CONFIG_MM_SPI_IRQ,INPUT);
+    pinMode(CONFIG_MM_RESET_N,OUTPUT);
+    digitalWrite(CONFIG_MM_RESET_N,0);
+    delay(10);
+    digitalWrite(CONFIG_MM_RESET_N,1);
+    delay(10);
+
+
 }
 
 static void wlan_hal_spi_init(void)
@@ -107,7 +114,7 @@ static void wlan_hal_spi_init(void)
     //printf("Actual SPI CLK %dkHz\n", actual_freq_khz);
 }
 
-static void wlan_hal_spi_deinit(void)
+void wlan_hal_spi_deinit(void)
 {
     esp_err_t ret = spi_bus_remove_device(spi_handle);
     if (ret != ESP_OK)
@@ -253,8 +260,6 @@ void mmhal_wlan_deinit(void)
     /* Lower the RESET_N line to disable the WLAN transceiver. This will put the transceiver in its
      * lowest power state. */
     gpio_set_level(CONFIG_MM_RESET_N, 0);
-
-    mmosal_semb_delete(dma_semb_handle);
 
     wlan_hal_spi_deinit();
 

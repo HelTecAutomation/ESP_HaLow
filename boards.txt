@@ -22,18 +22,12 @@ menu.PinNumbers=Pin Numbering
 
 # Custom options
 menu.Revision=Board Revision
-menu.LORAWAN_REGION=LoRaWan Region
-menu.LoRaWanDebugLevel=LoRaWan Debug Level
-menu.LORAWAN_DEVEUI=LoRaWan DevEUI
-menu.LORAWAN_PREAMBLE_LENGTH=LoRaWan Preamble Length
-menu.SLOW_CLK_TPYE=Slow Clk Type(only for lorawan)
+menu.HC01_Voltage=FEM Voltage
 menu.NetworkLogLevel=NetworkLogLevel
 ##############################################################
 ### DO NOT PUT BOARDS ABOVE THE OFFICIAL ESPRESSIF BOARDS! ###
 ##############################################################
 HT-HC32.name=HT-HC32
-HT-HC32.vid.0=0x303a
-HT-HC32.pid.0=0x1001
 
 HT-HC32.bootloader.tool=esptool_py
 HT-HC32.bootloader.tool.default=esptool_py
@@ -75,7 +69,7 @@ HT-HC32.build.loop_core=
 HT-HC32.build.event_core=
 HT-HC32.build.psram_type=qspi
 HT-HC32.build.memory_type={build.boot}_{build.psram_type}
-
+HT-HC32.build.bcf_lib=bcf_mf08551
 
 HT-HC32.menu.LoopCore.1=Core 1
 HT-HC32.menu.LoopCore.1.build.loop_core=-DARDUINO_RUNNING_CORE=1
@@ -216,7 +210,7 @@ HT-HC33.build.loop_core=
 HT-HC33.build.event_core=
 HT-HC33.build.psram_type=qspi
 HT-HC33.build.memory_type={build.boot}_{build.psram_type}
-
+HT-HC33.build.bcf_lib=bcf_mf08551
 
 HT-HC33.menu.LoopCore.1=Core 1
 HT-HC33.menu.LoopCore.1.build.loop_core=-DARDUINO_RUNNING_CORE=1
@@ -310,5 +304,291 @@ HT-HC33.menu.EraseFlash.none=Disabled
 HT-HC33.menu.EraseFlash.none.upload.erase_cmd=
 HT-HC33.menu.EraseFlash.all=Enabled
 HT-HC33.menu.EraseFlash.all.upload.erase_cmd=-e
+
+##############################################################
+
+##############################################################
+##############################################################
+HT-HC33-V2.name=HT-HC33(V2)
+HT-HC33-V2.vid.0=0x303a
+HT-HC33-V2.pid.0=0x1001
+
+HT-HC33-V2.bootloader.tool=esptool_py
+HT-HC33-V2.bootloader.tool.default=esptool_py
+
+HT-HC33-V2.upload.tool=esptool_py
+HT-HC33-V2.upload.tool.default=esptool_py
+HT-HC33-V2.upload.tool.network=esp_ota
+
+HT-HC33-V2.upload.maximum_size=3670016
+HT-HC33-V2.upload.maximum_data_size=327680
+HT-HC33-V2.upload.flags=
+HT-HC33-V2.upload.extra_flags=
+HT-HC33-V2.upload.use_1200bps_touch=false
+HT-HC33-V2.upload.wait_for_upload_port=false
+
+HT-HC33-V2.serial.disableDTR=false
+HT-HC33-V2.serial.disableRTS=false
+
+HT-HC33-V2.build.tarch=xtensa
+HT-HC33-V2.build.bootloader_addr=0x0
+HT-HC33-V2.build.target=esp32s3
+HT-HC33-V2.build.mcu=esp32s3
+HT-HC33-V2.build.core=esp32
+HT-HC33-V2.build.variant=HT-HC33
+HT-HC33-V2.build.board=HT-HC33-V2
+
+HT-HC33-V2.build.usb_mode=1
+HT-HC33-V2.build.cdc_on_boot=0
+HT-HC33-V2.build.msc_on_boot=0
+HT-HC33-V2.build.dfu_on_boot=0
+HT-HC33-V2.build.f_cpu=240000000L
+HT-HC33-V2.build.flash_size=8MB
+HT-HC33-V2.build.flash_freq=80m
+HT-HC33-V2.build.flash_mode=dio
+HT-HC33-V2.build.boot=qio
+HT-HC33-V2.build.boot_freq=80m
+HT-HC33-V2.build.partitions=default_8MB
+HT-HC33-V2.build.loop_core=
+HT-HC33-V2.build.event_core=
+HT-HC33-V2.build.psram_type=qspi
+HT-HC33-V2.build.memory_type={build.boot}_{build.psram_type}
+HT-HC33-V2.build.bcf_lib=bcf_HC01_V2_L
+
+HT-HC33-V2.menu.LoopCore.1=Core 1
+HT-HC33-V2.menu.LoopCore.1.build.loop_core=-DARDUINO_RUNNING_CORE=1
+HT-HC33-V2.menu.LoopCore.0=Core 0
+HT-HC33-V2.menu.LoopCore.0.build.loop_core=-DARDUINO_RUNNING_CORE=0
+
+HT-HC33-V2.menu.EventsCore.1=Core 1
+HT-HC33-V2.menu.EventsCore.1.build.event_core=-DARDUINO_EVENT_RUNNING_CORE=1
+HT-HC33-V2.menu.EventsCore.0=Core 0
+HT-HC33-V2.menu.EventsCore.0.build.event_core=-DARDUINO_EVENT_RUNNING_CORE=0
+
+HT-HC33-V2.menu.USBMode.hwcdc=Hardware CDC and JTAG
+HT-HC33-V2.menu.USBMode.hwcdc.build.usb_mode=1
+HT-HC33-V2.menu.USBMode.default=USB-OTG (TinyUSB)
+HT-HC33-V2.menu.USBMode.default.build.usb_mode=0
+
+HT-HC33-V2.menu.CDCOnBoot.default=Disabled
+HT-HC33-V2.menu.CDCOnBoot.default.build.cdc_on_boot=0
+HT-HC33-V2.menu.CDCOnBoot.cdc=Enabled
+HT-HC33-V2.menu.CDCOnBoot.cdc.build.cdc_on_boot=1
+
+HT-HC33-V2.menu.MSCOnBoot.default=Disabled
+HT-HC33-V2.menu.MSCOnBoot.default.build.msc_on_boot=0
+HT-HC33-V2.menu.MSCOnBoot.msc=Enabled (Requires USB-OTG Mode)
+HT-HC33-V2.menu.MSCOnBoot.msc.build.msc_on_boot=1
+
+HT-HC33-V2.menu.DFUOnBoot.default=Disabled
+HT-HC33-V2.menu.DFUOnBoot.default.build.dfu_on_boot=0
+HT-HC33-V2.menu.DFUOnBoot.dfu=Enabled (Requires USB-OTG Mode)
+HT-HC33-V2.menu.DFUOnBoot.dfu.build.dfu_on_boot=1
+
+HT-HC33-V2.menu.UploadMode.default=UART0 / Hardware CDC
+HT-HC33-V2.menu.UploadMode.default.upload.use_1200bps_touch=false
+HT-HC33-V2.menu.UploadMode.default.upload.wait_for_upload_port=false
+HT-HC33-V2.menu.UploadMode.cdc=USB-OTG CDC (TinyUSB)
+HT-HC33-V2.menu.UploadMode.cdc.upload.use_1200bps_touch=true
+HT-HC33-V2.menu.UploadMode.cdc.upload.wait_for_upload_port=true
+
+HT-HC33-V2.menu.CPUFreq.240=240MHz (WiFi)
+HT-HC33-V2.menu.CPUFreq.240.build.f_cpu=240000000L
+HT-HC33-V2.menu.CPUFreq.160=160MHz (WiFi)
+HT-HC33-V2.menu.CPUFreq.160.build.f_cpu=160000000L
+HT-HC33-V2.menu.CPUFreq.80=80MHz (WiFi)
+HT-HC33-V2.menu.CPUFreq.80.build.f_cpu=80000000L
+HT-HC33-V2.menu.CPUFreq.40=40MHz
+HT-HC33-V2.menu.CPUFreq.40.build.f_cpu=40000000L
+HT-HC33-V2.menu.CPUFreq.20=20MHz
+HT-HC33-V2.menu.CPUFreq.20.build.f_cpu=20000000L
+HT-HC33-V2.menu.CPUFreq.10=10MHz
+HT-HC33-V2.menu.CPUFreq.10.build.f_cpu=10000000L
+
+HT-HC33-V2.menu.UploadSpeed.921600=921600
+HT-HC33-V2.menu.UploadSpeed.921600.upload.speed=921600
+HT-HC33-V2.menu.UploadSpeed.115200=115200
+HT-HC33-V2.menu.UploadSpeed.115200.upload.speed=115200
+HT-HC33-V2.menu.UploadSpeed.256000.windows=256000
+HT-HC33-V2.menu.UploadSpeed.256000.upload.speed=256000
+HT-HC33-V2.menu.UploadSpeed.230400.windows.upload.speed=256000
+HT-HC33-V2.menu.UploadSpeed.230400=230400
+HT-HC33-V2.menu.UploadSpeed.230400.upload.speed=230400
+HT-HC33-V2.menu.UploadSpeed.460800.linux=460800
+HT-HC33-V2.menu.UploadSpeed.460800.macosx=460800
+HT-HC33-V2.menu.UploadSpeed.460800.upload.speed=460800
+HT-HC33-V2.menu.UploadSpeed.512000.windows=512000
+HT-HC33-V2.menu.UploadSpeed.512000.upload.speed=512000
+
+HT-HC33-V2.menu.DebugLevel.none=None
+HT-HC33-V2.menu.DebugLevel.none.build.code_debug=0
+HT-HC33-V2.menu.DebugLevel.error=Error
+HT-HC33-V2.menu.DebugLevel.error.build.code_debug=1
+HT-HC33-V2.menu.DebugLevel.warn=Warn
+HT-HC33-V2.menu.DebugLevel.warn.build.code_debug=2
+HT-HC33-V2.menu.DebugLevel.info=Info
+HT-HC33-V2.menu.DebugLevel.info.build.code_debug=3
+HT-HC33-V2.menu.DebugLevel.debug=Debug
+HT-HC33-V2.menu.DebugLevel.debug.build.code_debug=4
+HT-HC33-V2.menu.DebugLevel.verbose=Verbose
+HT-HC33-V2.menu.DebugLevel.verbose.build.code_debug=5
+
+HT-HC33-V2.menu.PSRAM.disabled=Disabled
+HT-HC33-V2.menu.PSRAM.disabled.build.defines=
+HT-HC33-V2.menu.PSRAM.disabled.build.psram_type=qspi
+HT-HC33-V2.menu.PSRAM.enabled=QSPI PSRAM
+HT-HC33-V2.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM
+HT-HC33-V2.menu.PSRAM.enabled.build.psram_type=qspi
+HT-HC33-V2.menu.PSRAM.opi=OPI PSRAM
+HT-HC33-V2.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
+HT-HC33-V2.menu.PSRAM.opi.build.psram_type=opi
+
+HT-HC33-V2.menu.EraseFlash.none=Disabled
+HT-HC33-V2.menu.EraseFlash.none.upload.erase_cmd=
+HT-HC33-V2.menu.EraseFlash.all=Enabled
+HT-HC33-V2.menu.EraseFlash.all.upload.erase_cmd=-e
+##############################################################
+
+
+##############################################################
+HT-RC3268.name=HT-RC3268
+HT-RC3268.vid.0=0x303a
+HT-RC3268.pid.0=0x1001
+
+HT-RC3268.bootloader.tool=esptool_py
+HT-RC3268.bootloader.tool.default=esptool_py
+
+HT-RC3268.upload.tool=esptool_py
+HT-RC3268.upload.tool.default=esptool_py
+HT-RC3268.upload.tool.network=esp_ota
+
+HT-RC3268.upload.maximum_size=3670016
+HT-RC3268.upload.maximum_data_size=327680
+HT-RC3268.upload.flags=
+HT-RC3268.upload.extra_flags=
+HT-RC3268.upload.use_1200bps_touch=false
+HT-RC3268.upload.wait_for_upload_port=false
+
+HT-RC3268.serial.disableDTR=false
+HT-RC3268.serial.disableRTS=false
+
+HT-RC3268.build.tarch=xtensa
+HT-RC3268.build.bootloader_addr=0x0
+HT-RC3268.build.target=esp32s3
+HT-RC3268.build.mcu=esp32s3
+HT-RC3268.build.core=esp32
+HT-RC3268.build.variant=HT-RC3268
+HT-RC3268.build.board=HT-RC3268
+
+HT-RC3268.build.usb_mode=1
+HT-RC3268.build.cdc_on_boot=0
+HT-RC3268.build.msc_on_boot=0
+HT-RC3268.build.dfu_on_boot=0
+HT-RC3268.build.f_cpu=240000000L
+HT-RC3268.build.flash_size=8MB
+HT-RC3268.build.flash_freq=80m
+HT-RC3268.build.flash_mode=dio
+HT-RC3268.build.boot=qio
+HT-RC3268.build.boot_freq=80m
+HT-RC3268.build.partitions=default_8MB
+HT-RC3268.build.loop_core=
+HT-RC3268.build.event_core=
+HT-RC3268.build.psram_type=qspi
+HT-RC3268.build.memory_type={build.boot}_{build.psram_type}
+HT-RC3268.build.bcf_lib=bcf_HC01_V2_L
+
+HT-RC3268.menu.LoopCore.1=Core 1
+HT-RC3268.menu.LoopCore.1.build.loop_core=-DARDUINO_RUNNING_CORE=1
+HT-RC3268.menu.LoopCore.0=Core 0
+HT-RC3268.menu.LoopCore.0.build.loop_core=-DARDUINO_RUNNING_CORE=0
+
+HT-RC3268.menu.EventsCore.1=Core 1
+HT-RC3268.menu.EventsCore.1.build.event_core=-DARDUINO_EVENT_RUNNING_CORE=1
+HT-RC3268.menu.EventsCore.0=Core 0
+HT-RC3268.menu.EventsCore.0.build.event_core=-DARDUINO_EVENT_RUNNING_CORE=0
+
+HT-RC3268.menu.USBMode.hwcdc=Hardware CDC and JTAG
+HT-RC3268.menu.USBMode.hwcdc.build.usb_mode=1
+HT-RC3268.menu.USBMode.default=USB-OTG (TinyUSB)
+HT-RC3268.menu.USBMode.default.build.usb_mode=0
+
+HT-RC3268.menu.CDCOnBoot.default=Enabled
+HT-RC3268.menu.CDCOnBoot.default.build.cdc_on_boot=1
+HT-RC3268.menu.CDCOnBoot.cdc=Disabled
+HT-RC3268.menu.CDCOnBoot.cdc.build.cdc_on_boot=0
+
+HT-RC3268.menu.MSCOnBoot.default=Disabled
+HT-RC3268.menu.MSCOnBoot.default.build.msc_on_boot=0
+HT-RC3268.menu.MSCOnBoot.msc=Enabled (Requires USB-OTG Mode)
+HT-RC3268.menu.MSCOnBoot.msc.build.msc_on_boot=1
+
+HT-RC3268.menu.DFUOnBoot.default=Disabled
+HT-RC3268.menu.DFUOnBoot.default.build.dfu_on_boot=0
+HT-RC3268.menu.DFUOnBoot.dfu=Enabled (Requires USB-OTG Mode)
+HT-RC3268.menu.DFUOnBoot.dfu.build.dfu_on_boot=1
+
+HT-RC3268.menu.UploadMode.default=UART0 / Hardware CDC
+HT-RC3268.menu.UploadMode.default.upload.use_1200bps_touch=false
+HT-RC3268.menu.UploadMode.default.upload.wait_for_upload_port=false
+HT-RC3268.menu.UploadMode.cdc=USB-OTG CDC (TinyUSB)
+HT-RC3268.menu.UploadMode.cdc.upload.use_1200bps_touch=true
+HT-RC3268.menu.UploadMode.cdc.upload.wait_for_upload_port=true
+
+HT-RC3268.menu.CPUFreq.240=240MHz (WiFi)
+HT-RC3268.menu.CPUFreq.240.build.f_cpu=240000000L
+HT-RC3268.menu.CPUFreq.160=160MHz (WiFi)
+HT-RC3268.menu.CPUFreq.160.build.f_cpu=160000000L
+HT-RC3268.menu.CPUFreq.80=80MHz (WiFi)
+HT-RC3268.menu.CPUFreq.80.build.f_cpu=80000000L
+HT-RC3268.menu.CPUFreq.40=40MHz
+HT-RC3268.menu.CPUFreq.40.build.f_cpu=40000000L
+HT-RC3268.menu.CPUFreq.20=20MHz
+HT-RC3268.menu.CPUFreq.20.build.f_cpu=20000000L
+HT-RC3268.menu.CPUFreq.10=10MHz
+HT-RC3268.menu.CPUFreq.10.build.f_cpu=10000000L
+
+HT-RC3268.menu.UploadSpeed.921600=921600
+HT-RC3268.menu.UploadSpeed.921600.upload.speed=921600
+HT-RC3268.menu.UploadSpeed.115200=115200
+HT-RC3268.menu.UploadSpeed.115200.upload.speed=115200
+HT-RC3268.menu.UploadSpeed.256000.windows=256000
+HT-RC3268.menu.UploadSpeed.256000.upload.speed=256000
+HT-RC3268.menu.UploadSpeed.230400.windows.upload.speed=256000
+HT-RC3268.menu.UploadSpeed.230400=230400
+HT-RC3268.menu.UploadSpeed.230400.upload.speed=230400
+HT-RC3268.menu.UploadSpeed.460800.linux=460800
+HT-RC3268.menu.UploadSpeed.460800.macosx=460800
+HT-RC3268.menu.UploadSpeed.460800.upload.speed=460800
+HT-RC3268.menu.UploadSpeed.512000.windows=512000
+HT-RC3268.menu.UploadSpeed.512000.upload.speed=512000
+
+HT-RC3268.menu.DebugLevel.none=None
+HT-RC3268.menu.DebugLevel.none.build.code_debug=0
+HT-RC3268.menu.DebugLevel.error=Error
+HT-RC3268.menu.DebugLevel.error.build.code_debug=1
+HT-RC3268.menu.DebugLevel.warn=Warn
+HT-RC3268.menu.DebugLevel.warn.build.code_debug=2
+HT-RC3268.menu.DebugLevel.info=Info
+HT-RC3268.menu.DebugLevel.info.build.code_debug=3
+HT-RC3268.menu.DebugLevel.debug=Debug
+HT-RC3268.menu.DebugLevel.debug.build.code_debug=4
+HT-RC3268.menu.DebugLevel.verbose=Verbose
+HT-RC3268.menu.DebugLevel.verbose.build.code_debug=5
+
+HT-RC3268.menu.PSRAM.disabled=Disabled
+HT-RC3268.menu.PSRAM.disabled.build.defines=
+HT-RC3268.menu.PSRAM.disabled.build.psram_type=qspi
+HT-RC3268.menu.PSRAM.enabled=QSPI PSRAM
+HT-RC3268.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM
+HT-RC3268.menu.PSRAM.enabled.build.psram_type=qspi
+HT-RC3268.menu.PSRAM.opi=OPI PSRAM
+HT-RC3268.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
+HT-RC3268.menu.PSRAM.opi.build.psram_type=opi
+
+HT-RC3268.menu.EraseFlash.none=Disabled
+HT-RC3268.menu.EraseFlash.none.upload.erase_cmd=
+HT-RC3268.menu.EraseFlash.all=Enabled
+HT-RC3268.menu.EraseFlash.all.upload.erase_cmd=-e
+
 
 ##############################################################
