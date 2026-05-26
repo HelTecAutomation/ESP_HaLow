@@ -69,7 +69,8 @@ public:
     String BSSIDstr();
 
     int8_t RSSI();
-
+    struct netif* netif(void);
+    
     static void _setStatus(wl_status_t status);
 private:
 	struct mmwlan_sta_args sta_args = MMWLAN_STA_ARGS_INIT;

@@ -144,7 +144,7 @@ void setup() {
     HaLow.setDNS(IPAddress(114,114,114,114),IPAddress(192,168,0,1));
     
   
-#ifdef HT-RC3268
+#ifdef HT_RC3268
   //enable WiFiHalow LDO
   pinMode(HALOW_LDO_CTRL,OUTPUT);
   digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);

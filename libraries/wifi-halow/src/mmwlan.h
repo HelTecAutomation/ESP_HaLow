@@ -595,6 +595,66 @@ struct mmwlan_twt_config_args
 enum mmwlan_status mmwlan_twt_add_configuration(
     const struct mmwlan_twt_config_args *twt_config_args);
 
+/** The total number of @ref mmwlan_qos_queue_params that exist. */
+#define MMWLAN_QOS_QUEUE_NUM_ACIS 4
+
+/** Structure for storing QoS queue parameters  */
+struct mmwlan_qos_queue_params
+{
+    /** Access Category Index [0..3]. */
+    uint8_t aci;
+    /** Arbitration Inter-frame Space [2..255] */
+    uint8_t aifs;
+    /** Minimum Contention Window */
+    uint16_t cw_min;
+    /** Maximum Contention Window */
+    uint16_t cw_max;
+    /** Maximum burst time in microseconds, 0 meaning disabled. */
+    uint32_t txop_max_us;
+};
+
+/**
+ * Updates the default QoS queue configuration to the given values.
+ * These values will be made active while the station is connecting to an Access Point.
+ *
+ * @note Although the active configuration will be changed to the Access Point's configurations
+ *       for these values after connecting, these default values will not be overwritten and will
+ *       be reactivated after the station disconnects.
+ *
+ * @param params Array of QoS queue parameters. This array does not need to be sorted in Access
+ *               Category Index (ACI) order, since the ACI is specified as part of the
+ *               @c mmwlan_qos_queue_params structure. The same ACI must not be specified more
+ *               than once in this array. If a parameter for a given ACI is not included in this
+ *               list then its configuration will be left unchanged.
+ *
+ * @param count  The number of elements in the @c params array.
+ *               Must be at least 1 and no more than @ref MMWLAN_QOS_QUEUE_NUM_ACIS.
+ *
+ * @return @ref MMWLAN_SUCCESS on success, else an appropriate error code.
+ */
+enum mmwlan_status mmwlan_set_default_qos_queue_params(const struct mmwlan_qos_queue_params *params,
+                                                       size_t count);
+
+/** Enumeration of configuration states for MCS10 behavior. */
+enum mmwlan_mcs10_mode
+{
+    /** MCS10 is disabled. */
+    MMWLAN_MCS10_MODE_DISABLED = 0x00,
+    /** Always use MCS10 instead of MCS 0 if the bandwidth is 1 MHz. */
+    MMWLAN_MCS10_MODE_FORCED = 0x01,
+    /** Use MCS10 on retries instead of MCS 0 if the bandwidth is 1 MHz. */
+    MMWLAN_MCS10_MODE_AUTO = 0x02
+};
+
+/**
+ * Configure the rate adaptation behavior around selecting MCS10.
+ *
+ * @param mcs10_mode   Sets the MCS10 mode. See @ref mmwlan_mcs10_mode for what each mode means.
+ *
+ * @return @ref MMWLAN_SUCCESS on success, else an appropriate error code.
+ */
+enum mmwlan_status mmwlan_set_mcs10_mode(enum mmwlan_mcs10_mode mcs10_mode);
+
 /**
  * Arguments data structure for @ref mmwlan_boot().
  *
@@ -799,15 +859,6 @@ struct mmwlan_sta_args
      * If this is 0 then the @ref MMWLAN_DEFAULT_SCAN_INTERVAL_LIMIT_S will be used.
      */
     uint16_t scan_interval_limit_s;
-    /**
-     * Optional array of association backoff times in seconds. This is a zero-terminated array
-     * of backoff times in seconds. When not NULL, it overrides the default delay times used
-     * between successive authentication failures.
-     *
-     * This can be used to speed up association for a large number of stations in a congested
-     * network.
-     */
-    const int *backoffs;
 };
 
 /**
@@ -819,7 +870,7 @@ struct mmwlan_sta_args
     { { 0 }, 0, { 0 }, MMWLAN_OPEN, { 0 }, 0, MMWLAN_PMF_REQUIRED, -1, MMWLAN_STA_TYPE_NON_SENSOR, \
       { 0 }, MMWLAN_CAC_DISABLED, DEFAULT_BGSCAN_SHORT_INTERVAL_S, DEFAULT_BGSCAN_THRESHOLD_DBM,   \
       DEFAULT_BGSCAN_LONG_INTERVAL_S, NULL, NULL,                                                  \
-      MMWLAN_DEFAULT_SCAN_INTERVAL_BASE_S, MMWLAN_DEFAULT_SCAN_INTERVAL_LIMIT_S, NULL }
+      MMWLAN_DEFAULT_SCAN_INTERVAL_BASE_S, MMWLAN_DEFAULT_SCAN_INTERVAL_LIMIT_S }
 
 /**
  * Enable station mode.
@@ -1470,8 +1521,7 @@ struct mmwlan_standby_config
      */
     uint16_t dst_port;
     /**
-     * The interval in seconds to wait after beacon loss before entering snooze. In
-     * snooze mode the chip stops listening for beacons to save power. (Default 120s)
+     * @deprecated This parameter is no longer used and will be removed in a future release.
      */
     uint32_t bss_inactivity_before_snooze_s;
     /**
@@ -2164,6 +2214,28 @@ struct mmwlan_morse_stats *mmwlan_get_morse_stats(uint32_t core_num, bool reset)
  * @param stats     The instance to free. May be @ NULL.
  */
 void mmwlan_free_morse_stats(struct mmwlan_morse_stats *stats);
+
+/**
+ * The data for this struct is auto-generated, so it is stored externally.
+ * See mmwlan_stats.h for definition.
+ */
+struct mmwlan_stats_umac_data;
+
+/** @ingroup MMWLAN_UMAC_STATS */
+
+/** @{ */
+
+/**
+ * Gets the current values of the UMAC statistics.
+ *
+ * @param stats_dest An @c mmwlan_umac_stats pointer where the data will be stored.
+ *
+ * @return @ref MMWLAN_SUCCESS if stats retrieved or @ref MMWLAN_INVALID_ARGUMENT
+ *          if the buffer is NULL.
+ */
+enum mmwlan_status mmwlan_get_umac_stats(struct mmwlan_stats_umac_data *stats_dest);
+
+/** @} */
 
 /** @} */
 

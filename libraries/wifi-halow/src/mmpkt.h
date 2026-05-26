@@ -157,8 +157,26 @@ static inline struct mmpkt *mmpkt_init_buf(uint8_t *buf, uint32_t buf_len,
 
     uint8_t *data_start;
     uint32_t header_size = MM_FAST_ROUND_UP(sizeof(*mmpkt), 4);
-    uint32_t data_len = MM_FAST_ROUND_UP(space_at_start + space_at_end, 4);
+    uint32_t data_len;
     metadata_size = MM_FAST_ROUND_UP(metadata_size, 4);
+
+    if (space_at_end != UINT32_MAX)
+    {
+        data_len = MM_FAST_ROUND_UP(space_at_start + space_at_end, 4);
+    }
+    else
+    {
+        /* Special case: if space_at_end is UINT32_MAX then use the entire buffer.
+         * Note that we round down to ensure that the metadata is word aligned. */
+        data_len = (buf_len - header_size - metadata_size) & ~0x03ul;
+        /* Signed comparison in case buf_len was less than (header_size + metadata_size).
+         * Note that we do not expect to allocate an mmpkt with length > INT32_MAX, so we
+         * can safely treat these as signed integers. */
+        if ((int32_t)data_len < (int32_t)space_at_start)
+        {
+            return NULL;
+        }
+    }
 
     if (header_size + data_len + metadata_size > buf_len)
     {
@@ -408,6 +426,21 @@ static inline void mmpkt_append_data(struct mmpktview *view, const uint8_t *data
 static inline union mmpkt_metadata_ptr mmpkt_get_metadata(struct mmpkt *mmpkt)
 {
     return mmpkt->metadata;
+}
+
+/**
+ * Adjust the start offset of an mmpkt. This is only allowable when the mmpkt is empty
+ * (i.e., @c data_len is 0).
+ *
+ * @param mmpkt     The mmpkt to operate on.
+ * @param delta     Difference between the current start offset and the new start offset
+ *                  (this may be negative, but the new start offset must not be less than 0).
+ */
+static inline void mmpkt_adjust_start_offset(struct mmpkt *mmpkt, int32_t delta)
+{
+    MMOSAL_ASSERT(mmpkt->data_len == 0);
+    mmpkt->start_offset += delta;
+    MMOSAL_ASSERT(mmpkt->start_offset <= mmpkt->buf_len);
 }
 
 /**

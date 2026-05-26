@@ -13,7 +13,7 @@ void setup()
   Serial.print("Connecting to ");
   Serial.println(ssid);
   
-#ifdef HT-RC3268
+#ifdef HT_RC3268
   //enable WiFiHalow LDO
   pinMode(HALOW_LDO_CTRL,OUTPUT);
   digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);

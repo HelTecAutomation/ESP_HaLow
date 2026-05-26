@@ -292,7 +292,12 @@ void mmhal_wlan_hard_reset(void);
 bool mmhal_wlan_ext_xtal_init_is_required(void);
 
 /**
- * Issue the training sequence required to put the transceiver into SPI mode.
+ * Issue the training sequence. During this at least 74 clock cycles must be supplied to the chip
+ * to allow it to prepare for the first command. This is only invoked when using SPI mode in which
+ * case the CS shall be held high (@c mmhal_wlan_spi_cs_deassert()) during the 74 clock cycles.
+ *
+ * See section 6.4.1.1 of the SD spec "Physical Layer Simplified Specification Version 9.10" for
+ * more detail.
  */
 void mmhal_wlan_send_training_seq(void);
 
@@ -332,14 +337,25 @@ bool mmhal_wlan_spi_irq_is_asserted(void);
  */
 void mmhal_wlan_clear_spi_irq(void);
 
+/** @} */
+
+
+/**
+ * @defgroup MMHAL_WLAN_PKT WLAN HAL API for packet memory allocation
+ *
+ * API for allocating and freeing packet memory.
+ *
+ * @warning These functions shall not be called directly by the end application they are for use
+ *          by Morselib.
+ *
+ * @{
+ */
 
 /**
  * Flow control callback that can be invoked by the transmit packet memory manager to pause
  * and resume the data path in response to resource availability.
- *
- * @param state Current flow control state.
  */
-typedef void (*mmhal_wlan_pktmem_tx_flow_control_cb_t)(enum mmwlan_tx_flow_control_state state);
+typedef void (*mmhal_wlan_pktmem_tx_flow_control_cb_t)(void);
 
 /** Initialization arguments passed to @ref mmhal_wlan_pktmem_init().  */
 struct mmhal_wlan_pktmem_init_args
@@ -361,6 +377,13 @@ void mmhal_wlan_pktmem_init(struct mmhal_wlan_pktmem_init_args *args);
  * This can free reserved memory and check for memory leaks.
  */
 void mmhal_wlan_pktmem_deinit(void);
+
+/**
+ * Gets the current TX flow control state.
+ *
+ * @return The current flow control state.
+ */
+enum mmwlan_tx_flow_control_state mmhal_wlan_pktmem_tx_flow_control_state(void);
 
 /**
  * Enumeration of packet classes used by @ref mmhal_wlan_alloc_mmpkt_for_tx().
@@ -403,15 +426,51 @@ struct mmpkt *mmhal_wlan_alloc_mmpkt_for_tx(uint8_t pkt_class,
 /**
  * Allocates an mmpkt for reception.
  *
- * @param capacity          Amount of space to allocate for data.
+ * @param pkt_class         The class of packet (to allow for prioritization). Currently
+ *                          used values are @ref MMHAL_WLAN_PKT_DATA_TID0 for data and
+ *                          management frames, and @ref MMHAL_WLAN_PKT_COMMAND for critical
+ *                          buffers used internally by the driver (e.g., for command responses)
+ *                          where known.
+ * @param capacity          Amount of space to allocate for data. A value of @c UINT32_MAX
+ *                          should allocate the largest available mmpkt (if supported).
  * @param metadata_length   Amount of space to allocate for metadata (used internally by the
  *                          Morse driver).
  *
  * @returns a pointer to the allocated packet on success or @c NULL on allocation failure.
  */
-struct mmpkt *mmhal_wlan_alloc_mmpkt_for_rx(uint32_t capacity, uint32_t metadata_length);
+struct mmpkt *mmhal_wlan_alloc_mmpkt_for_rx(uint8_t pkt_class,
+                                            uint32_t capacity, uint32_t metadata_length);
 
 /** @} */
+
+/**
+ * This value represents the maximum size of a TX packet that can be allocated
+ * within the TX pool. It includes the packet size and the TX metadata.
+ */
+#define MMHAL_WLAN_MMPKT_TX_MAX_SIZE    (1664)
+
+/**
+ * This value represents the maximum size of a RX packet that can be allocated
+ * within the RX pool. It includes the packet size and the RX metadata
+ */
+#define MMHAL_WLAN_MMPKT_RX_MAX_SIZE    (1668)
+
+/**
+ * Size of the TX pool in blocks.
+ */
+#ifndef MMPKTMEM_TX_POOL_N_BLOCKS
+#define MMPKTMEM_TX_POOL_N_BLOCKS       (20)
+#endif
+
+/**
+ * Size of the RX pool in blocks.
+ *
+ * @note Values less than 23 may result in instability.
+ */
+#ifndef MMPKTMEM_RX_POOL_N_BLOCKS
+#define MMPKTMEM_RX_POOL_N_BLOCKS       (23)
+#endif
+
 
 /**
  * @defgroup MMHAL_WLAN_SDIO WLAN HAL API for SDIO interface

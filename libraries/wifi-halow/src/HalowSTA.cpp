@@ -420,7 +420,13 @@ int8_t HalowSTAClass::RSSI(void)
     return (int8_t)mmwlan_get_rssi();
 }
 
-
+/**
+ * Return Halow netif.
+ */
+struct netif* HalowSTAClass::netif(void)
+{
+    return &(mmipal_data.lwip_mmnetif);
+}
 //HalowSTAClass HaLow;
 
 

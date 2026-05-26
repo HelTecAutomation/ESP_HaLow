@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "soc/soc_caps.h"
 
-#define HT-RC3268 true
+#define HT_RC3268 true
 #define USB_VID 0x303a
 #define USB_PID 0x1001
 
