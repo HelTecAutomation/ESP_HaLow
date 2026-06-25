@@ -25,6 +25,39 @@ Note that SPI pins can be configured by using `SPI.begin(sck, miso, mosi, cs);` 
 | DO (MISO)    | GPIO12  | GPIO19| GPIO25   | GPIO15   | GPIO15   |
 | SCK (SCLK)   | GPIO14  | GPIO18| GPIO19   | GPIO16   | GPIO16   |
 
+## Heads-up: a serial monitor can make a *present* SD card look missing
+
+On boards that use the standard ESP32 **DTR/RTS auto-reset** circuit, opening a
+serial monitor toggles DTR/RTS and **warm-resets the MCU** — but this does *not*
+power-cycle the SD card. A card that mounted fine on the real cold boot can then
+fail to re-initialize after that warm reset and report `Card Mount Failed`,
+making it look like no card is inserted even though one is.
+
+Observed with the **Arduino IDE 2.3.10** Serial Monitor, but it applies to any
+tool that asserts DTR/RTS when it opens the port.
+
+**Workarounds**
+
+- **Power-cycle** the board (fully unplug USB for a few seconds) before trusting a
+  "card missing" result — pressing reset or re-flashing does *not* power-cycle the
+  card.
+- Or watch the port with a tool that does **not** toggle DTR/RTS. A minimal
+  [pyserial](https://pypi.org/project/pyserial/) reader works well:
+
+  ```python
+  import serial, sys
+  p = serial.Serial()
+  p.port = "/dev/cu.usbserial-0001"   # your port
+  p.baudrate = 115200
+  p.dtr = False                       # hold the reset line inactive...
+  p.rts = False                       # ...so opening the port does NOT reset the board
+  p.open()
+  while True:
+      data = p.read(p.in_waiting or 1)
+      if data:
+          sys.stdout.write(data.decode("utf-8", "replace")); sys.stdout.flush()
+  ```
+
 ## FAQ:
 
 **Do I need any additional modules**, like **the **Arduino**** SD module**?**
