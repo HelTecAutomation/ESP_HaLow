@@ -15,6 +15,10 @@
 #include <HalowHTTPClient.h>
 #include <HalowHTTPUpdate.h>
 
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
+
 
 
 void update_started() {
@@ -46,8 +50,8 @@ void setup() {
 #endif
 
 
-  HaLow.init("US");
-  HaLow.begin("HT-HR01-FE8F", "heltec.org");
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
   Serial.print("Halow connectting");
   while(HaLow.status() != WL_CONNECTED)
   {

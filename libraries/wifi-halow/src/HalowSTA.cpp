@@ -137,47 +137,7 @@ wl_status_t HalowSTAClass::begin(const char* ssid, const char *passphrase, mmwla
 {
 	enum mmwlan_status _status;
 	struct mmwlan_version version;
-
-/*
-	halowtcpipInit();
-
-	enum mmwlan_status _status;
-	struct mmwlan_version version;
-
-	MMOSAL_ASSERT(link_established == NULL);
-	link_established = mmosal_semb_create("link_established");
-
-
-	mmhal_init();
-	mmwlan_init();
-
-	char strval[16];
-	(void)mmosal_safer_strcpy(strval, region, sizeof(strval));
-	channel_list = mmwlan_lookup_regulatory_domain(get_regulatory_db(), strval);
-	if (channel_list == NULL)
-	{
-		printf("Could not find specified regulatory domain matching country code %s\n", strval);
-		printf("Please set the configuration key wlan.country_code to the correct country code.\n");
-		MMOSAL_ASSERT(false);
-	}
-
-	mmwlan_set_channel_list(channel_list);
-
-*/
-	/* Load IP stack settings from config store, or use defaults if no entry found in
-	 * config store. */
-
-	//load_mmipal_init_args(&mmipal_init_args);
-
-
-
-//mmwlan_set_power_save_mode(MMWLAN_PS_DISABLED);
-
-
-//	_status = mmwlan_get_version(&version);
-//	MMOSAL_ASSERT(_status == MMWLAN_SUCCESS);
-//	printf("Morse firmware version %s, morselib version %s, Morse chip ID 0x%lx\n\n",
-//		   version.morse_fw_version, version.morselib_version, version.morse_chip_id);
+  halow_mode=MMWLAN_VIF_STA;
 
     /* Load SSID */
     (void)mmosal_safer_strcpy((char*)sta_args.ssid, ssid, sizeof(sta_args.ssid));
@@ -223,12 +183,13 @@ wl_status_t HalowSTAClass::begin(const char* ssid, const char *passphrase, mmwla
  */
 bool HalowSTAClass::setDNS(IPAddress dns1, IPAddress dns2)
 {
+
 	ip_addr_t dns;
 	dns1.to_ip_addr_t(&dns);
 	dns_setserver(0, &dns);
 	dns2.to_ip_addr_t(&dns);
 	dns_setserver(1, &dns);
-    return 1;
+  return 1;
 }
 
 /**

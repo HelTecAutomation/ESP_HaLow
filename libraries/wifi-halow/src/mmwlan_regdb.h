@@ -23,12 +23,84 @@
  * | ------------ | ------- |
  * | AU | Australia |
  * | CA | Canada |
- * | EU | EU |
+ * | EU | User assigned EU |
+ * | GB | United Kingdom |
  * | IN | India |
  * | JP | Japan |
  * | KR | South Korea |
  * | NZ | New Zealand |
  * | US | USA |
+ *
+ * @section MMWLAN_REGDB_TEMPLATE_CHANNELS Channel / Bandwidth map
+ *
+ * Frequency ranges below are the actual occupied band edges (center ㊣ BW/2).
+ *
+ * AU (Australia) 〞 occupied: 915.5每927.5 MHz (802.11-2024)
+ *   BW  | channels
+ *   --- | ----------------------------
+ *   1M  | 28 30 32 34 36 38 40
+ *       | 42 44 46 48 50
+ *   2M  | 29 33 37 41 45 49
+ *   4M  | 31 39 47
+ *   8M  | 35 43
+ *
+ * CA (Canada) 〞 occupied: 902.0每928.0 MHz
+ *   BW  | channels
+ *   --- | -------------------------------------------
+ *   1M  | 1 3 5 7 9 11 13 15 17 19 21 23 25
+ *       | 27 29 31 33 35 37 39 41 43 45 47 49 51
+ *   2M  | 2 6 10 14 18 22 26 30 34 38 42 46 50
+ *   4M  | 8 16 24 32 40 48
+ *   8M  | 12 28 44
+ *
+ * EU (User assigned EU) 〞 occupied: 863.0每868.0 MHz
+ *   BW  | channels
+ *   --- | ---------
+ *   1M  | 1 3 5 7 9
+ *   2M  | 2 6
+ *
+ * GB (United Kingdom) 〞 occupied: 863.0每868.0 MHz & 917.4每919.4 MHz
+ *   BW  | channels
+ *   --- | ----------
+ *   1M  | 1 3 5 7 9 (863MHz), 33 35 (917MHz)
+ *   2M  | 2 6
+ *
+ * IN (India) 〞 occupied: 865.0每868.0 MHz
+ *   BW  | channels
+ *   --- | ---------
+ *   1M  | 5 7 9
+ *
+ * JP (Japan) 〞 occupied: 920.5每927.5 MHz
+ *   BW  | channels
+ *   --- | ---------------
+ *   1M  | 9 13 15 17 19 21
+ *   2M  | 2 4 6 8
+ *   4M  | 36 38
+ *
+ * KR (South Korea) 〞 occupied: 917.5每923.5 MHz & 926.0每930.0 MHz
+ *   BW  | channels
+ *   --- | ------------------------
+ *   1M  | 1 3 5 7 9 11 18 20 22 24
+ *   2M  | 2 6 10 19 23
+ *   4M  | 8
+ *
+ * NZ (New Zealand) 〞 occupied: 915.0每928.0 MHz
+ *   BW  | channels
+ *   --- | ----------------------------
+ *   1M  | 27 29 31 33 35 37 39 41 43
+ *       | 45 47 49 51
+ *   2M  | 30 34 38 42 46 50
+ *   4M  | 32 40 48
+ *   8M  | 44
+ *
+ * US (USA) 〞 occupied: 902.0每928.0 MHz
+ *   BW  | channels
+ *   --- | -------------------------------------------
+ *   1M  | 1 3 5 7 9 11 13 15 17 19 21 23 25
+ *       | 27 29 31 33 35 37 39 41 43 45 47 49 51
+ *   2M  | 2 6 10 14 18 22 26 30 34 38 42 46 50
+ *   4M  | 8 16 24 32 40 48
+ *   8M  | 12 28 44
  */
 #ifndef __MMWLAN_REGDB_H__
 #define __MMWLAN_REGDB_H__
@@ -60,14 +132,58 @@ const struct mmwlan_s1g_channel s1g_channels_AU[] = {
     {  922000000, 10000, false, 70, 24, 40,  4,  30, 0, 0, 0 },
     {  926000000, 10000, false, 70, 24, 48,  4,  30, 0, 0, 0 },
     {  924000000, 10000, false, 71, 25, 44,  8,  30, 0, 0, 0 },
+    {  916000000, 10000, false, 50, 22, 28,  1,  30, 0, 0, 0 },
+    {  917000000, 10000, false, 50, 22, 30,  1,  30, 0, 0, 0 },
+    {  918000000, 10000, false, 50, 22, 32,  1,  30, 0, 0, 0 },
+    {  919000000, 10000, false, 50, 22, 34,  1,  30, 0, 0, 0 },
+    {  920000000, 10000, false, 50, 22, 36,  1,  30, 0, 0, 0 },
+    {  921000000, 10000, false, 50, 22, 38,  1,  30, 0, 0, 0 },
+    {  922000000, 10000, false, 50, 22, 40,  1,  30, 0, 0, 0 },
+    {  923000000, 10000, false, 50, 22, 42,  1,  30, 0, 0, 0 },
+    {  924000000, 10000, false, 50, 22, 44,  1,  30, 0, 0, 0 },
+    {  925000000, 10000, false, 50, 22, 46,  1,  30, 0, 0, 0 },
+    {  926000000, 10000, false, 50, 22, 48,  1,  30, 0, 0, 0 },
+    {  927000000, 10000, false, 50, 22, 50,  1,  30, 0, 0, 0 },
+    {  916500000, 10000, false, 51, 23, 29,  2,  30, 0, 0, 0 },
+    {  918500000, 10000, false, 51, 23, 33,  2,  30, 0, 0, 0 },
+    {  920500000, 10000, false, 51, 23, 37,  2,  30, 0, 0, 0 },
+    {  922500000, 10000, false, 51, 23, 41,  2,  30, 0, 0, 0 },
+    {  924500000, 10000, false, 51, 23, 45,  2,  30, 0, 0, 0 },
+    {  926500000, 10000, false, 51, 23, 49,  2,  30, 0, 0, 0 },
+    {  917500000, 10000, false, 52, 24, 31,  4,  30, 0, 0, 0 },
+    {  921500000, 10000, false, 52, 24, 39,  4,  30, 0, 0, 0 },
+    {  925500000, 10000, false, 52, 24, 47,  4,  30, 0, 0, 0 },
+    {  919500000, 10000, false, 53, 25, 35,  8,  30, 0, 0, 0 },
+    {  923500000, 10000, false, 53, 25, 43,  8,  30, 0, 0, 0 },
+    {  919500000, 10000, false, 48, 39, 51,  4,  30, 0, 0, 0 },
+    {  923500000, 10000, false, 48, 39, 59,  4,  30, 0, 0, 0 },
+    {  921500000, 10000, false, 49, 40, 55,  8,  30, 0, 0, 0 },
 };
 
-/** Channel list structure for Australia. */
-const struct mmwlan_s1g_channel_list s1g_channel_list_AU = {
+/** Channel list structure for Australia IEEE 802.11-2020. */
+const struct mmwlan_s1g_channel_list s1g_channel_list_au_80211_2020 = {
     .country_code = "AU",
-    .num_channels = (sizeof(s1g_channels_AU)/sizeof(s1g_channels_AU[0])),
-    .channels = s1g_channels_AU,
+    .num_channels = 23,
+    .channels = &s1g_channels_AU[0],
 };
+
+/** Channel list structure for Australia IEEE 802.11-2024. */
+const struct mmwlan_s1g_channel_list s1g_channel_list_au_80211_2024 = {
+    .country_code = "AU",
+    .num_channels = 23,
+    .channels = &s1g_channels_AU[23],
+};
+
+/** Channel list structure for Australia IEEE 802.11-REVMF. */
+const struct mmwlan_s1g_channel_list s1g_channel_list_au_80211_revmf = {
+    .country_code = "AU",
+    .num_channels = 26,
+    .channels = &s1g_channels_AU[23],
+};
+
+#ifndef MM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU
+   #define MM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU s1g_channel_list_au_80211_2024
+#endif
 
 /** List of valid S1G channels for Canada. */
 const struct mmwlan_s1g_channel s1g_channels_CA[] = {
@@ -129,21 +245,44 @@ const struct mmwlan_s1g_channel_list s1g_channel_list_CA = {
     .channels = s1g_channels_CA,
 };
 
-/** List of valid S1G channels for EU. */
+/** List of valid S1G channels for User assigned EU. */
 const struct mmwlan_s1g_channel s1g_channels_EU[] = {
     /* Ctr Freq (Hz), Duty Cycle (%/100), Omit Control Response, Global Op Class, S1G Op Class, S1G Chan #, Op BW, Max Tx EIRP (dBm), Min Packet Spacing Window (microsec), airtime_min (microsec), airtime_max (microsec) */
-    {  863500000,   10000, false, 66,  6,  1,  1,  16, 0, 0, 0 },
-    {  864500000,   10000, false, 66,  6,  3,  1,  16, 0, 0, 0 },
-    {  865500000,   10000, false, 66,  6,  5,  1,  16, 0, 0, 0 },
-    {  866500000,   10000, false, 66,  6,  7,  1,  16, 0, 0, 0 },
-    {  867500000,   10000, false, 66,  6,  9,  1,  16, 0, 0, 0 },
+    {  863500000,   280, false, 66,  6,  1,  1,  16, 0, 0, 0 },
+    {  864500000,   280, false, 66,  6,  3,  1,  16, 0, 0, 0 },
+    {  865500000,   280, false, 66,  6,  5,  1,  16, 0, 0, 0 },
+    {  866500000,   280, false, 66,  6,  7,  1,  16, 0, 0, 0 },
+    {  867500000,   280, false, 66,  6,  9,  1,  16, 0, 0, 0 },
+    {  864000000,   280, false, 67,  7,  2,  2,  16, 0, 0, 0 },
+    {  866000000,   280, false, 67,  7,  6,  2,  16, 0, 0, 0 },
 };
 
-/** Channel list structure for EU. */
+/** Channel list structure for User assigned EU. */
 const struct mmwlan_s1g_channel_list s1g_channel_list_EU = {
     .country_code = "EU",
     .num_channels = (sizeof(s1g_channels_EU)/sizeof(s1g_channels_EU[0])),
     .channels = s1g_channels_EU,
+};
+
+/** List of valid S1G channels for United Kingdom. */
+const struct mmwlan_s1g_channel s1g_channels_GB[] = {
+    /* Ctr Freq (Hz), Duty Cycle (%/100), Omit Control Response, Global Op Class, S1G Op Class, S1G Chan #, Op BW, Max Tx EIRP (dBm), Min Packet Spacing Window (microsec), airtime_min (microsec), airtime_max (microsec) */
+    {  863500000,   280, false, 66,  6,  1,  1,  16, 0, 0, 0 },
+    {  864500000,   280, false, 66,  6,  3,  1,  16, 0, 0, 0 },
+    {  865500000,   280, false, 66,  6,  5,  1,  16, 0, 0, 0 },
+    {  866500000,   280, false, 66,  6,  7,  1,  16, 0, 0, 0 },
+    {  867500000,   280, false, 66,  6,  9,  1,  16, 0, 0, 0 },
+    {  864000000,   280, false, 67,  7,  2,  2,  16, 0, 0, 0 },
+    {  866000000,   280, false, 67,  7,  6,  2,  16, 0, 0, 0 },
+    {  917900000,   280, false, 77, 30, 33,  1,  16, 0, 0, 0 },
+    {  918900000,   280, false, 77, 30, 35,  1,  16, 0, 0, 0 },
+};
+
+/** Channel list structure for United Kingdom. */
+const struct mmwlan_s1g_channel_list s1g_channel_list_GB = {
+    .country_code = "GB",
+    .num_channels = (sizeof(s1g_channels_GB)/sizeof(s1g_channels_GB[0])),
+    .channels = s1g_channels_GB,
 };
 
 /** List of valid S1G channels for India. */
@@ -311,9 +450,10 @@ const struct mmwlan_s1g_channel_list s1g_channel_list_US = {
 /** Array of all channel list structs used for the regulatory database. */
 
 static const struct mmwlan_s1g_channel_list *regulatory_db_domains[] = {
-    &s1g_channel_list_AU,
+    &MM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU,
     &s1g_channel_list_CA,
     &s1g_channel_list_EU,
+    &s1g_channel_list_GB,
     &s1g_channel_list_IN,
     &s1g_channel_list_JP,
     &s1g_channel_list_KR,

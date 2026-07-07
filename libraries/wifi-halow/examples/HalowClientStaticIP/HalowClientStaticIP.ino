@@ -1,13 +1,15 @@
 #include <HaLow.h>
 
-const char* ssid     = "HT-H7608";
-const char* password = "123456789";
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
+
 const char* host     = "www.baidu.com";
 const char* url      = "/index.html";
 
 IPAddress local_IP(192, 168, 0, 218);
 IPAddress gateway(192, 168, 0, 1);
-IPAddress subnet(255, 255, 0, 0);
+IPAddress subnet(255, 255, 255, 0);
 IPAddress primaryDNS(8, 8, 8, 8); //optional
 IPAddress secondaryDNS(8, 8, 4, 4); //optional
 
@@ -15,21 +17,21 @@ void setup()
 {
   Serial.begin(115200);
 
-  if (!HaLow.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
-    Serial.println("STA Failed to configure");
-  }
-
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  
 #ifdef HT_RC3268
   //enable WiFiHalow LDO
   pinMode(HALOW_LDO_CTRL,OUTPUT);
   digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
 #endif
 
-  HaLow.init("US");
-  HaLow.begin(ssid, password);
+  if (!HaLow.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
+    Serial.println("STA Failed to configure");
+  }
+
+  Serial.print("Connecting to ");
+  Serial.println(HALOW_AP_SSID);
+
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
 
   while (HaLow.status() != WL_CONNECTED) {
     delay(500);

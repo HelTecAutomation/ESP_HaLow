@@ -12,8 +12,9 @@ IPERF_TCP_SERVER: Run "iperf -c {IP} -p {IPERF_SERVER_PORT} -i 1" on the halow g
 #include "lwip/sys.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
-const char* ssid     = "HT-HR01-FE8F";
-const char* password = "heltec.org";
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
 
 /* ------------------------ Configuration options ------------------------ */
 
@@ -234,7 +235,7 @@ void setup()
   Serial.begin(115200);
 
   Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println(HALOW_AP_SSID);
   
 #ifdef HT_RC3268
   //enable WiFiHalow LDO
@@ -243,8 +244,8 @@ void setup()
 #endif
 
 
-  HaLow.init("US");
-  HaLow.begin(ssid, password);
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
 
   while (HaLow.status() != WL_CONNECTED) {
     delay(500);

@@ -1,24 +1,24 @@
 /*
- * Copyright 2023 Morse Micro
+ * Copyright 2023-2025 Morse Micro
  *
- * This file is licensed under terms that can be found in the LICENSE.md file in the root
- * directory of the Morse Micro IoT SDK software package.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "slip.h"
 
 enum slip_special_chars
 {
-    SLIP_FRAME_END      = 0xc0,
-    SLIP_FRAME_ESC      = 0xdb,
-    SLIP_FRAME_ESC_END  = 0xdc,
-    SLIP_FRAME_ESC_ESC  = 0xdd,
+    SLIP_FRAME_END = 0xc0,
+    SLIP_FRAME_ESC = 0xdb,
+    SLIP_FRAME_ESC_END = 0xdc,
+    SLIP_FRAME_ESC_ESC = 0xdd,
 };
 
 static enum slip_rx_status slip_rx_append(struct slip_rx_state *state, uint8_t c)
 {
     if (state->length == state->buffer_length)
     {
+        state->frame_started = false;
         return SLIP_RX_BUFFER_LIMIT;
     }
 
@@ -34,8 +34,7 @@ enum slip_rx_status slip_rx(struct slip_rx_state *state, uint8_t c)
     {
         if (state->escape)
         {
-            state->escape = false;
-            state->length = 0;
+            slip_rx_state_reinit(state, state->buffer, state->buffer_length);
             return SLIP_RX_ERROR;
         }
         else if (state->length > 0)
@@ -44,6 +43,7 @@ enum slip_rx_status slip_rx(struct slip_rx_state *state, uint8_t c)
         }
         else
         {
+            state->frame_started = true;
             return SLIP_RX_IN_PROGRESS;
         }
     }
@@ -60,7 +60,7 @@ enum slip_rx_status slip_rx(struct slip_rx_state *state, uint8_t c)
         }
         else
         {
-            state->length = 0;
+            slip_rx_state_reinit(state, state->buffer, state->buffer_length);
             return SLIP_RX_ERROR;
         }
     }
@@ -69,14 +69,21 @@ enum slip_rx_status slip_rx(struct slip_rx_state *state, uint8_t c)
         state->escape = true;
         return SLIP_RX_IN_PROGRESS;
     }
-    else
+    else if (state->frame_started)
     {
         return slip_rx_append(state, c);
     }
+    else
+    {
+        /* Drop the char on the floor and return. */
+        return SLIP_RX_IN_PROGRESS;
+    }
 }
 
-int slip_tx(slip_transport_tx_fn transport_tx_fn, void *transport_tx_arg,
-            const uint8_t *packet, size_t packet_len)
+int slip_tx(slip_transport_tx_fn transport_tx_fn,
+            void *transport_tx_arg,
+            const uint8_t *packet,
+            size_t packet_len)
 {
     int ret = 0;
 
@@ -87,27 +94,27 @@ int slip_tx(slip_transport_tx_fn transport_tx_fn, void *transport_tx_arg,
         uint8_t c = *packet++;
         switch (c)
         {
-        case SLIP_FRAME_ESC:
-            ret = transport_tx_fn(SLIP_FRAME_ESC, transport_tx_arg);
-            if (ret != 0)
-            {
+            case SLIP_FRAME_ESC:
+                ret = transport_tx_fn(SLIP_FRAME_ESC, transport_tx_arg);
+                if (ret != 0)
+                {
+                    break;
+                }
+                ret = transport_tx_fn(SLIP_FRAME_ESC_ESC, transport_tx_arg);
                 break;
-            }
-            ret = transport_tx_fn(SLIP_FRAME_ESC_ESC, transport_tx_arg);
-            break;
 
-        case SLIP_FRAME_END:
-            ret = transport_tx_fn(SLIP_FRAME_ESC, transport_tx_arg);
-            if (ret != 0)
-            {
+            case SLIP_FRAME_END:
+                ret = transport_tx_fn(SLIP_FRAME_ESC, transport_tx_arg);
+                if (ret != 0)
+                {
+                    break;
+                }
+                ret = transport_tx_fn(SLIP_FRAME_ESC_END, transport_tx_arg);
                 break;
-            }
-            ret = transport_tx_fn(SLIP_FRAME_ESC_END, transport_tx_arg);
-            break;
 
-        default:
-            ret = transport_tx_fn(c, transport_tx_arg);
-            break;
+            default:
+                ret = transport_tx_fn(c, transport_tx_arg);
+                break;
         }
     }
 

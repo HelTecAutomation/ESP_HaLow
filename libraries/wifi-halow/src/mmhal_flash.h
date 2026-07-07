@@ -1,35 +1,35 @@
 /*
  * Copyright 2021-2023 Morse Micro
  *
- * This file is licensed under terms that can be found in the LICENSE.md file in the root
- * directory of the Morse Micro IoT SDK software package.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-
- /**
-  * @ingroup MMHAL Morse Micro Flash Hardware Abstraction Layer (mmhal_flash) API
-  *
-  * This API provides abstraction from the underlying flash hardware/.
-  *
-  * @{
-  */
+/**
+ * @ingroup MMHAL
+ * @defgroup MMHAL_FLASH Morse Micro Flash Hardware Abstraction Layer (mmhal_flash) API
+ *
+ * This API provides abstraction from the underlying flash hardware.
+ *
+ * @note This API is not used by morselib.
+ * @{
+ */
 
 #pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "halow_config.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /**
  * This is the value erased flash bytes are set to. This shall be @c 0xFF as this is the
  * value that hardware flash erases to.
  */
-#define MMHAL_FLASH_ERASE_VALUE   0xFF
+#define MMHAL_FLASH_ERASE_VALUE 0xFF
 
 /** LittleFS configuration structure. Include @c lfs.h for definition. */
 struct lfs_config;
@@ -62,7 +62,7 @@ struct mmhal_flash_partition_config
 };
 
 /** Initial values for @ref mmhal_flash_partition_config. */
-#define MMHAL_FLASH_PARTITION_CONFIG_DEFAULT   { 0, 0, false }
+#define MMHAL_FLASH_PARTITION_CONFIG_DEFAULT { 0, 0, false }
 
 /**
  * Get MMCONFIG flash partition configuration.
@@ -75,7 +75,7 @@ struct mmhal_flash_partition_config
  *
  * @return A static pointer to the partition config for MMCONFIG, or NULL if not supported.
  */
-const struct mmhal_flash_partition_config* mmhal_get_mmconfig_partition(void);
+const struct mmhal_flash_partition_config *mmhal_get_mmconfig_partition(void);
 
 /**
  * Erases a block of Flash pointed to by the block_address.
@@ -137,7 +137,7 @@ int mmhal_flash_write(uint32_t write_address, const uint8_t *data, size_t size);
  *
  * @return A static pointer to the LittleFS config structure, or NULL if not supported.
  */
-const struct lfs_config* mmhal_get_littlefs_config(void);
+const struct lfs_config *mmhal_get_littlefs_config(void);
 
 #ifdef __cplusplus
 }

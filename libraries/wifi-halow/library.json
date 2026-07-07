@@ -1,7 +1,7 @@
 {
   "name": "Heltec ESP32 Dev-Boards",
   "keywords": "heltec, esp32, lora, wifi kit, oled",
-  "description": "A library for WiFi Halow (ESP32S3) based board",
+  "description": "WiFi Halow library for ESP32-S3 + MM6108 (based on mm-iot-esp32 v2.10.4 SDK)",
   "repository":{
     "type": "git",
     "url": ""
@@ -10,7 +10,7 @@
         "name": "Heltec Automation(TM)",
         "email": "support@heltec.cn"
    },
-  "version": "1.1.2",
+  "version": "2.10.4",
   "frameworks": "arduino",
   "platforms": "espressif32"
 }

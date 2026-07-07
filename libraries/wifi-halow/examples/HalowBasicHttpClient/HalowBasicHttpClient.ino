@@ -9,8 +9,9 @@
 #include <HalowHTTPClient.h>
 #include <HaLow.h>
 
-const char* ssid     = "HT-H7608";
-const char* password = "123456789";
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
 
 const char* ca = \ 
 "-----BEGIN CERTIFICATE-----\n" \
@@ -46,8 +47,8 @@ void setup() {
   digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
 #endif
 
-  HaLow.init("US");
-  HaLow.begin(ssid, password);
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
 }
 
 void loop() {

@@ -36,7 +36,7 @@
 #include "mmipal.h"
 #include "mmosal.h"
 #include "loadconfig.h"
-#include "mmwlan_regdb.h"
+//#include "mmwlan_regdb.h"
 #include "WiFiType.h"
 
 #include "HardwareSerial.h"
@@ -55,8 +55,8 @@ typedef enum {
 	HALOW_EVENT_STA_CONNECTING,
 	HALOW_EVENT_STA_CONNECTED,
 	HALOW_EVENT_STA_DISCONNECTED,
-	HALOW_EVENT_STA_GOT_IP,
-	HALOW_EVENT_STA_LOST_IP
+	HALOW_EVENT_GOT_IP,
+	HALOW_EVENT_LOST_IP
 } wifi_halow_event_t;
 
 typedef enum {
@@ -67,8 +67,8 @@ typedef enum {
 	ARDUINO_HALOW_EVENT_STA_CONNECTING,
 	ARDUINO_HALOW_EVENT_STA_CONNECTED,
 	ARDUINO_HALOW_EVENT_STA_DISCONNECTED,
-	ARDUINO_HALOW_EVENT_STA_GOT_IP,
-	ARDUINO_HALOW_EVENT_STA_LOST_IP,
+	ARDUINO_HALOW_EVENT_GOT_IP,
+	ARDUINO_HALOW_EVENT_LOST_IP,
 	ARDUINO_HALOW_EVENT_MAX,
 } arduino_halow_event_id_t;
 
@@ -139,5 +139,6 @@ class HalowGenericClass
 };
 uint64_t getID();
 extern bool halowtcpipInit();
-
+extern enum mmwlan_vif halow_mode;
+extern const struct mmwlan_s1g_channel_list * halow_channel_list;
 #endif /* ESP32HalowGeneric_H_ */

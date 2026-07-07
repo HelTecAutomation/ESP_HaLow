@@ -8,17 +8,16 @@
 #include <HaLow.h>
 #include "sd_read_write.h"
 
-const char* ssid     = "HT-H7608";
-const char* password = "123456789";
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP-137"
+#define HALOW_PASSWORD   "heltec.org"
+
 void cameraInit(void);
 void startCameraServer();
 
-#define LED 19
-
 void setup() {
   Serial.begin(115200);
-  pinMode(LED,OUTPUT);
-  digitalWrite(LED,0);
+
   delay(100);
   Serial.setDebugOutput(true);
   Serial.println();
@@ -36,8 +35,8 @@ void setup() {
   digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
 #endif
 
-  HaLow.init("US");
-  HaLow.begin(ssid, password);
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
   Serial.print("MAC:");
   Serial.print(HaLow.macAddress());
   Serial.println();
@@ -50,8 +49,7 @@ void setup() {
 
   Serial.println("");
   Serial.println("HaLow connected");
-  digitalWrite(LED,1);
-
+  
   startCameraServer();
 
   Serial.print("Camera Ready! Use 'http://");
@@ -63,14 +61,9 @@ void loop() {
   // put your main code here, to run repeatedly:
   delay(5000);
 
-  if(HaLow.status() != WL_CONNECTED)
-  {
-    digitalWrite(LED,0);
-  }
-  else
+  if(HaLow.status() == WL_CONNECTED)
   {
     Serial.printf("[time %u s] halow rssi %d\r\n",millis()/1000,HaLow.RSSI());
-    digitalWrite(LED,1);
   }
 }
 
@@ -95,7 +88,7 @@ void cameraInit(void){
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
-  config.frame_size = FRAMESIZE_UXGA;
+  config.frame_size = FRAMESIZE_SVGA;
   config.pixel_format = PIXFORMAT_JPEG; // for streaming
   config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
   config.fb_location = CAMERA_FB_IN_PSRAM;

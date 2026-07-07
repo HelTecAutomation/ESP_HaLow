@@ -7,8 +7,9 @@
 #include <WebServer.h>
 #include <Update.h>
 
-const char* ssid     = "HT-H7608";
-const char* password = "123456789";
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
 
 WebServer server(80);
 const char* serverIndex = "<form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>";
@@ -23,8 +24,8 @@ void setup(void) {
   digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
 #endif
 
-  HaLow.init("US");
-  HaLow.begin(ssid, password);
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
 
   while (HaLow.status() != WL_CONNECTED) {
     delay(500);

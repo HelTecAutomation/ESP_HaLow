@@ -2,6 +2,11 @@
 
 #include "HaLow.h"
 #include <AsyncMqttClient.h>
+
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
+
 #define MQTT_HOST IPAddress(43,154,113,203)
 #define MQTT_PORT 1883
 IPAddress ServerIP;
@@ -21,8 +26,8 @@ void HaLowEvent(HaLowEvent_t event)
             Serial.println("ARDUINO_HALOW_EVENT_STA_DISCONNECTED");
             halow_connected=false;
             break;
-        case ARDUINO_HALOW_EVENT_STA_GOT_IP:
-            Serial.println("HALOW_EVENT_STA_GOT_IP");
+        case ARDUINO_HALOW_EVENT_GOT_IP:
+            Serial.println("HALOW_EVENT_GOT_IP");
             Serial.print("IP:");
             Serial.println(HaLow.localIP());
             Serial.print("NetMask:");
@@ -35,8 +40,8 @@ void HaLowEvent(HaLowEvent_t event)
             Serial.println(HaLow.BSSIDstr());
             halow_connected=true;
             break;
-        case ARDUINO_HALOW_EVENT_STA_LOST_IP:
-            Serial.println("ARDUINO_HALOW_EVENT_STA_LOST_IP");
+        case ARDUINO_HALOW_EVENT_LOST_IP:
+            Serial.println("ARDUINO_HALOW_EVENT_LOST_IP");
             Serial.print("IP:");
             Serial.println(HaLow.localIP());
             Serial.print("NetMask:");
@@ -151,8 +156,8 @@ void setup() {
 #endif
 
 
-    HaLow.init();
-    HaLow.begin("HT-H7608","123456789");
+    HaLow.init(HALOW_REGION);
+    HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
     Serial.println(HaLow.macAddress());
     HaLow.macAddress(mac);
     Serial.printf("%02X:%02X:%02X:%02X:%02X:%02X\r\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);

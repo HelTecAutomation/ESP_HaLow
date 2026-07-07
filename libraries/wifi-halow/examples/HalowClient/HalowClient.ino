@@ -1,7 +1,9 @@
 #include <HaLow.h>
 
-const char* ssid     = "HT-HR01-FE8F";
-const char* password = "heltec.org";
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
+
 const char* host     = "www.baidu.com";
 const char* url      = "/index.html";
 IPAddress hostIP;
@@ -11,7 +13,7 @@ void setup()
   Serial.begin(115200);
 
   Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println(HALOW_AP_SSID);
   
 #ifdef HT_RC3268
   //enable WiFiHalow LDO
@@ -19,8 +21,8 @@ void setup()
   digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
 #endif
 
-  HaLow.init("US");
-  HaLow.begin(ssid, password);
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
 
   while (HaLow.status() != WL_CONNECTED) {
     delay(500);

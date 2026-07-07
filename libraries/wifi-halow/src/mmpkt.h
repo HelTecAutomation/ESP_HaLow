@@ -34,6 +34,15 @@ extern "C" {
 #define MM_FAST_ROUND_UP(x, m) ((((x)-1) | ((m)-1)) + 1)
 #endif
 
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+/** Magic number indicating that an mmpkt is in the opened state.  */
+#define MMPKT_DEBUG_MAGIC_OPENED    (0x08254759)
+/** Magic number indicating that an mmpkt is in the closed state.  */
+#define MMPKT_DEBUG_MAGIC_CLOSED    (0xdeaddead)
+/** Magic number indicating that an mmpkt has been released.  */
+#define MMPKT_DEBUG_MAGIC_RELEASED  (0x0bad0bad)
+#endif
+
 struct mmdrv_cmd_metadata;
 struct mmdrv_tx_metadata;
 struct mmdrv_rx_metadata;
@@ -91,6 +100,9 @@ struct mmpkt
     const struct mmpkt_ops *ops;
     /** Pointer that can be used to construct linked lists. */
     struct mmpkt *volatile next;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    uint32_t debug_magic;
+#endif
 };
 
 /** Operations data structure for mmpkt. */
@@ -130,6 +142,9 @@ static inline void mmpkt_init(struct mmpkt *mmpkt, uint8_t *buf, uint32_t buf_le
     mmpkt->buf_len = buf_len;
     mmpkt->start_offset = data_start_offset;
     mmpkt->ops = ops;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    mmpkt->debug_magic = MMPKT_DEBUG_MAGIC_CLOSED;
+#endif
 }
 
 /**
@@ -235,6 +250,10 @@ void mmpkt_release(struct mmpkt *mmpkt);
  */
 static inline struct mmpktview *mmpkt_open(struct mmpkt *mmpkt)
 {
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_CLOSED);
+    mmpkt->debug_magic = MMPKT_DEBUG_MAGIC_OPENED;
+#endif
     return (struct mmpktview *)mmpkt;
 }
 
@@ -246,7 +265,16 @@ static inline struct mmpktview *mmpkt_open(struct mmpkt *mmpkt)
  */
 static inline void mmpkt_close(struct mmpktview **view)
 {
-    (void)(view);
+    MMOSAL_ASSERT(view != NULL);
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    struct mmpkt *mmpkt = (struct mmpkt *)(*view);
+    if (mmpkt != NULL)
+    {
+        MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+        mmpkt->debug_magic = MMPKT_DEBUG_MAGIC_CLOSED;
+    }
+#endif
+    *view = NULL;
 }
 
 /**
@@ -271,6 +299,9 @@ static inline struct mmpkt *mmpkt_from_view(struct mmpktview *view)
 static inline uint8_t *mmpkt_get_data_start(struct mmpktview *view)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
     return mmpkt->buf + mmpkt->start_offset;
 }
 
@@ -284,6 +315,9 @@ static inline uint8_t *mmpkt_get_data_start(struct mmpktview *view)
 static inline uint8_t *mmpkt_get_data_end(struct mmpktview *view)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
     return mmpkt->buf + mmpkt->start_offset + mmpkt->data_len;
 }
 
@@ -311,6 +345,9 @@ static inline uint32_t mmpkt_peek_data_length(struct mmpkt *mmpkt)
 static inline uint32_t mmpkt_get_data_length(struct mmpktview *view)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
     return mmpkt->data_len;
 }
 
@@ -324,6 +361,9 @@ static inline uint32_t mmpkt_get_data_length(struct mmpktview *view)
 static inline uint32_t mmpkt_available_space_at_start(struct mmpktview *view)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
     return mmpkt->start_offset;
 }
 
@@ -337,6 +377,9 @@ static inline uint32_t mmpkt_available_space_at_start(struct mmpktview *view)
 static inline uint32_t mmpkt_available_space_at_end(struct mmpktview *view)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
     return mmpkt->buf_len - (mmpkt->start_offset + mmpkt->data_len);
 }
 
@@ -356,6 +399,9 @@ static inline uint32_t mmpkt_available_space_at_end(struct mmpktview *view)
 static inline uint8_t *mmpkt_prepend(struct mmpktview *view, uint32_t len)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
     MMOSAL_ASSERT(len <= mmpkt_available_space_at_start(view));
     mmpkt->start_offset -= len;
     mmpkt->data_len += len;
@@ -395,6 +441,9 @@ static inline void mmpkt_prepend_data(struct mmpktview *view, const uint8_t * da
 static inline uint8_t *mmpkt_append(struct mmpktview *view, uint32_t len)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
     uint8_t *ret = mmpkt_get_data_end(view);
     MMOSAL_ASSERT(len <= mmpkt_available_space_at_end(view));
     mmpkt->data_len += len;
@@ -454,6 +503,9 @@ static inline void mmpkt_adjust_start_offset(struct mmpkt *mmpkt, int32_t delta)
 static inline uint8_t *mmpkt_remove_from_start(struct mmpktview *view, uint32_t len)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
     uint8_t *ret;
 
     if (mmpkt_get_data_length(view) < len)
@@ -480,14 +532,16 @@ static inline uint8_t *mmpkt_remove_from_start(struct mmpktview *view, uint32_t 
 static inline uint8_t *mmpkt_remove_from_end(struct mmpktview *view, uint32_t len)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
-    uint8_t *ret;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
 
     if (mmpkt_get_data_length(view) < len)
     {
         return NULL;
     }
 
-    ret = mmpkt_get_data_end(view) - len;
+    uint8_t *ret = mmpkt_get_data_end(view) - len;
 
     mmpkt->data_len -= len;
 
@@ -548,6 +602,9 @@ static inline void mmpkt_set_next(struct mmpkt *mmpkt, struct mmpkt *next)
 static inline bool mmpkt_contains_ptr(struct mmpktview *view, const void *ptr)
 {
     struct mmpkt *mmpkt = (struct mmpkt *)view;
+#if defined(MMPKT_DEBUG) && MMPKT_DEBUG
+    MMOSAL_ASSERT(mmpkt->debug_magic == MMPKT_DEBUG_MAGIC_OPENED);
+#endif
     return ((const uint8_t *)ptr >= &mmpkt->buf[0]
             && (const uint8_t *)ptr < &mmpkt->buf[mmpkt->buf_len]);
 }

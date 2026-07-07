@@ -272,10 +272,26 @@ void mmhal_wlan_deinit(void)
 void mmhal_wlan_wake_assert(void)
 {
     gpio_set_level(CONFIG_MM_WAKE, 1);
+    // 等待芯片拉高 BUSY 确认苏醒，最多等 50ms
+    int retry = 500;
+    while (retry-- > 0 && !gpio_get_level(CONFIG_MM_BUSY)) {
+        esp_rom_delay_us(100);
+    }
+    if (retry < 0) {
+        printf("Wake assert timed out waiting for BUSY\r\n");
+    }
 }
 
 void mmhal_wlan_wake_deassert(void)
 {
+    int retry = 500;
+    while (retry-- > 0 && gpio_get_level(CONFIG_MM_BUSY)) {
+        esp_rom_delay_us(100);
+    }
+    if (retry < 0) {
+        printf("Dewake assert timed out waiting for BUSY\r\n");
+        return;
+    }
     gpio_set_level(CONFIG_MM_WAKE, 0);
     //halow_esp_sleep();
 }
@@ -301,4 +317,9 @@ void mmhal_wlan_set_busy_irq_enabled(bool enabled)
     {
         gpio_set_intr_type(CONFIG_MM_BUSY, GPIO_INTR_DISABLE);
     }
+}
+
+const struct mmhal_chip *mmhal_get_chip(void)
+{
+    return &mmhal_mm6108;
 }

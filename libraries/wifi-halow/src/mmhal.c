@@ -99,12 +99,6 @@ void mmhal_set_led(uint8_t led, uint8_t level)
     UNUSED(level);
 }
 
-bool mmhal_datalink_set_deepsleep_mode(enum mmhal_datalink_deepsleep_mode mode)
-{
-    /* Do nothing as we currently do not support deep sleep on this platform */
-    UNUSED(mode);
-    return false;
-}
 
 bool mmhal_get_hardware_version(char * version_buffer, size_t version_buffer_length)
 {

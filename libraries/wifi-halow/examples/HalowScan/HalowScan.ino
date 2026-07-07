@@ -1,4 +1,7 @@
 #include "HaLow.h"
+
+#define HALOW_REGION     "US"
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -11,7 +14,7 @@ void setup() {
 
 
   // Set HaLow region. 
-  HaLow.init("US");
+  HaLow.init(HALOW_REGION);
   
   Serial.println("Setup done");
 }

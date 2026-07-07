@@ -149,12 +149,7 @@ HT-HC32.menu.DebugLevel.debug.build.code_debug=4
 HT-HC32.menu.DebugLevel.verbose=Verbose
 HT-HC32.menu.DebugLevel.verbose.build.code_debug=5
 
-HT-HC32.menu.PSRAM.disabled=Disabled
-HT-HC32.menu.PSRAM.disabled.build.defines=
-HT-HC32.menu.PSRAM.disabled.build.psram_type=qspi
-HT-HC32.menu.PSRAM.enabled=QSPI PSRAM
-HT-HC32.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM
-HT-HC32.menu.PSRAM.enabled.build.psram_type=qspi
+
 HT-HC32.menu.PSRAM.opi=OPI PSRAM
 HT-HC32.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
 HT-HC32.menu.PSRAM.opi.build.psram_type=opi
@@ -290,12 +285,6 @@ HT-HC33.menu.DebugLevel.debug.build.code_debug=4
 HT-HC33.menu.DebugLevel.verbose=Verbose
 HT-HC33.menu.DebugLevel.verbose.build.code_debug=5
 
-HT-HC33.menu.PSRAM.disabled=Disabled
-HT-HC33.menu.PSRAM.disabled.build.defines=
-HT-HC33.menu.PSRAM.disabled.build.psram_type=qspi
-HT-HC33.menu.PSRAM.enabled=QSPI PSRAM
-HT-HC33.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM
-HT-HC33.menu.PSRAM.enabled.build.psram_type=qspi
 HT-HC33.menu.PSRAM.opi=OPI PSRAM
 HT-HC33.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
 HT-HC33.menu.PSRAM.opi.build.psram_type=opi
@@ -433,12 +422,6 @@ HT-HC33-V2.menu.DebugLevel.debug.build.code_debug=4
 HT-HC33-V2.menu.DebugLevel.verbose=Verbose
 HT-HC33-V2.menu.DebugLevel.verbose.build.code_debug=5
 
-HT-HC33-V2.menu.PSRAM.disabled=Disabled
-HT-HC33-V2.menu.PSRAM.disabled.build.defines=
-HT-HC33-V2.menu.PSRAM.disabled.build.psram_type=qspi
-HT-HC33-V2.menu.PSRAM.enabled=QSPI PSRAM
-HT-HC33-V2.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM
-HT-HC33-V2.menu.PSRAM.enabled.build.psram_type=qspi
 HT-HC33-V2.menu.PSRAM.opi=OPI PSRAM
 HT-HC33-V2.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
 HT-HC33-V2.menu.PSRAM.opi.build.psram_type=opi
@@ -575,12 +558,6 @@ HT-RC3268.menu.DebugLevel.debug.build.code_debug=4
 HT-RC3268.menu.DebugLevel.verbose=Verbose
 HT-RC3268.menu.DebugLevel.verbose.build.code_debug=5
 
-HT-RC3268.menu.PSRAM.disabled=Disabled
-HT-RC3268.menu.PSRAM.disabled.build.defines=
-HT-RC3268.menu.PSRAM.disabled.build.psram_type=qspi
-HT-RC3268.menu.PSRAM.enabled=QSPI PSRAM
-HT-RC3268.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM
-HT-RC3268.menu.PSRAM.enabled.build.psram_type=qspi
 HT-RC3268.menu.PSRAM.opi=OPI PSRAM
 HT-RC3268.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
 HT-RC3268.menu.PSRAM.opi.build.psram_type=opi

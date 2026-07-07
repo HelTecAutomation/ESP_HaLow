@@ -17,7 +17,8 @@
 #include "mmpkt.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** Structure that can be used as the head of a linked list of mmpkts that counts its length. */
@@ -32,7 +33,7 @@ struct mmpkt_list
 };
 
 /** Static initializer for @ref mmpkt_list. */
-#define MMPKT_LIST_INIT     { NULL, NULL, 0 }
+#define MMPKT_LIST_INIT { NULL, NULL, 0 }
 
 /**
  * Initialization function for @ref mmpkt_list, for cases where @c MMPKT_LIST_INIT
@@ -45,6 +46,18 @@ static inline void mmpkt_list_init(struct mmpkt_list *list)
     list->head = NULL;
     list->tail = NULL;
     list->len = 0;
+}
+
+/**
+ * Gets the current length of the given mmpkt list.
+ *
+ * @param list  The list to get the length of.
+ *
+ * @return the current length of @c list.
+ */
+static inline uint32_t mmpkt_list_length(struct mmpkt_list *list)
+{
+    return list->len;
 }
 
 /**
@@ -62,6 +75,15 @@ void mmpkt_list_prepend(struct mmpkt_list *list, struct mmpkt *mmpkt);
  * @param mmpkt The mmpkt to append.
  */
 void mmpkt_list_append(struct mmpkt_list *list, struct mmpkt *mmpkt);
+
+/**
+ * Insert an mmpkt into an mmpkt list after a specified list entry.
+ *
+ * @param list  The list to insert into.
+ * @param ref   The packet to insert after.
+ * @param mmpkt The mmpkt to insert.
+ */
+void mmpkt_list_insert_after(struct mmpkt_list *list, struct mmpkt *ref, struct mmpkt *mmpkt);
 
 /**
  * Remove an mmpkt from an mmpkt list.
@@ -149,6 +171,16 @@ static inline struct mmpkt *mmpkt_list_peek_tail(struct mmpkt_list *list)
 void mmpkt_list_clear(struct mmpkt_list *list);
 
 /**
+ * Insert mmpkts to the end of an mmpkt list, from another mmpkt list.
+ *
+ * The mmpkts will be removed from the other list, and the other list will be marked as empty.
+ *
+ * @param list  The list to append to.
+ * @param other The list to remove mmpkts from for appending.
+ */
+void mmpkt_list_append_list(struct mmpkt_list *list, struct mmpkt_list *other);
+
+/**
  * Safely walk the mmpkt list.
  *
  * @warning This macro cannot be used following an if statement with no parentheses if there
@@ -156,10 +188,9 @@ void mmpkt_list_clear(struct mmpkt_list *list);
  *          `if (x) MMPKT_LIST_WALK(a,b,c) else foo();` -- instead:
  *          `if (x) { MMPKT_LIST_WALK(a,b,c) } else foo();`
  */
-#define MMPKT_LIST_WALK(_lst, _wlk, _nxt)                          \
-        if ((_lst)->head != NULL) /* NOLINT(readability/braces) */ \
-        for (_wlk = (_lst)->head, _nxt = mmpkt_get_next(_wlk);     \
-             _wlk != NULL;                                         \
+#define MMPKT_LIST_WALK(_lst, _wlk, _nxt)                                    \
+    if ((_lst)->head != NULL) /* NOLINT(readability/braces) */               \
+        for (_wlk = (_lst)->head, _nxt = mmpkt_get_next(_wlk); _wlk != NULL; \
              _wlk = _nxt, _nxt = _wlk ? mmpkt_get_next(_wlk) : NULL)
 
 #ifdef __cplusplus

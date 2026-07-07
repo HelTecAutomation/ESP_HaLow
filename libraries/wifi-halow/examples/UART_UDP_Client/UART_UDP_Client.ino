@@ -1,8 +1,9 @@
 #include <HaLow.h>
 #include <WiFiUdp.h>
 
-const char* ssid     = "HT-HR01-FE8F";
-const char* password = "heltec.org";
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
 
 #define SERVER_ADDR "192.168.0.76"
 #define SERVER_PORT 10000
@@ -35,8 +36,8 @@ void HaLowEvent(HaLowEvent_t event)
             Serial.println("ARDUINO_HALOW_EVENT_STA_DISCONNECTED");
             halowconnected=false;
             break;
-        case ARDUINO_HALOW_EVENT_STA_GOT_IP:
-            Serial.println("HALOW_EVENT_STA_GOT_IP");
+        case ARDUINO_HALOW_EVENT_GOT_IP:
+            Serial.println("HALOW_EVENT_GOT_IP");
             Serial.print("IP:");
             Serial.println(HaLow.localIP());
             Serial.print("NetMask:");
@@ -45,8 +46,8 @@ void HaLowEvent(HaLowEvent_t event)
             Serial.println(HaLow.gatewayIP());
             halowconnected=true;
             break;
-        case ARDUINO_HALOW_EVENT_STA_LOST_IP:
-            Serial.println("ARDUINO_HALOW_EVENT_STA_LOST_IP");
+        case ARDUINO_HALOW_EVENT_LOST_IP:
+            Serial.println("ARDUINO_HALOW_EVENT_LOST_IP");
             halowconnected=false;
             break;
         default: break;
@@ -59,7 +60,7 @@ void setup()
   Serial.begin(115200);
 
   Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println(HALOW_AP_SSID);
   
 #ifdef HT_RC3268
   //enable WiFiHalow LDO
@@ -68,9 +69,9 @@ void setup()
 #endif
 
   HaLow.onEvent(HaLowEvent);
-  HaLow.init("US");
+  HaLow.init(HALOW_REGION);
 
-  HaLow.begin(ssid, password);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
 }
 
 void loop()

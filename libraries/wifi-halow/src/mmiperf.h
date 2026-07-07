@@ -1,26 +1,26 @@
 /*
- * Copyright 2021-2023 Morse Micro
+ * Copyright 2021-2024 Morse Micro
  *
- * This file is licensed under terms that can be found in the LICENSE.md file in the root
- * directory of the Morse Micro IoT SDK software package.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
- /**
-  * @ingroup MMAPP
-  * @defgroup MMIPERF Morse Micro Iperf for LwIP
-  *
-  * This is an iperf implementation for LwIP that supports both TCP and UDP.
-  *
-  * @{
-  */
-
+/**
+ * @ingroup MMAPP
+ * @defgroup MMIPERF Morse Micro Iperf
+ *
+ * This is an iperf implementation that supports both TCP and UDP.
+ *
+ * @{
+ */
 
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
-#include "halow_config.h"
+
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /** If a bandwidth limit is set then we divide transmission into blocks and limit the amount of data
@@ -28,22 +28,22 @@ extern "C" {
 #define BLOCK_DURATION_MS 200
 
 /** Difference between @c IPv4 and @c IPv6 Header size in bytes. */
-#define IPV6_HEADER_SIZE_DIFF               (20)
+#define IPV6_HEADER_SIZE_DIFF (20)
 
 /** Default port for TCP and UDP iperf. */
-#define MMIPERF_DEFAULT_PORT                (5001)
+#define MMIPERF_DEFAULT_PORT (5001)
 /** Default packet size for @c IPv4 UDP iperf. */
-#define MMIPERF_DEFAULT_UDP_PACKET_SIZE_V4  (1460)
+#define MMIPERF_DEFAULT_UDP_PACKET_SIZE_V4 (1460)
 /** Default packet size for @c IPv4 UDP iperf. */
-#define MMIPERF_DEFAULT_UDP_PACKET_SIZE_V6  (1440)
+#define MMIPERF_DEFAULT_UDP_PACKET_SIZE_V6 (1440)
 /** Default amount iperf (negative number indicates a time in hundredths of seconds, a positive
  *  value indicates a number of bytes). */
-#define MMIPERF_DEFAULT_AMOUNT              (-1000)
+#define MMIPERF_DEFAULT_AMOUNT (-1000)
 /** Default bandwidth limit for iperf (in kbps) */
-#define MMIPERF_DEFAULT_BANDWIDTH           (0)
+#define MMIPERF_DEFAULT_BANDWIDTH (0)
 
 /** Maximum length of an IP address string including null-terminator. */
-#define MMIPERF_IPADDR_MAXLEN               (48)
+#define MMIPERF_IPADDR_MAXLEN (48)
 
 #ifndef MMIPERF_STACK_SIZE
 /** Default stack to use for MMIPERF tasks. */
@@ -137,12 +137,12 @@ struct mmiperf_report
 /**
  * Report callback function prototype.
  *
- * @param report    The report data.
- * @param arg       Opaque argument given when the iperf server/client was started.
- * @param handle    Handle of the iperf client/server that generated the report.
+ * @param report The report data.
+ * @param arg    Opaque argument given when the iperf server/client was started.
+ * @param handle Handle of the iperf client/server that generated the report.
  */
-typedef void (*mmiperf_report_fn)(const struct mmiperf_report *report, void *arg,
-                                  mmiperf_handle_t handle);
+typedef void (
+    *mmiperf_report_fn)(const struct mmiperf_report *report, void *arg, mmiperf_handle_t handle);
 
 /**
  * Iperf client arguments data structure.
@@ -179,11 +179,10 @@ struct mmiperf_client_args
 };
 
 /** Initializer for @ref mmiperf_client_args. */
-#define MMIPERF_CLIENT_ARGS_DEFAULT                                                               \
-    {                                                                                             \
-        { 0 }, MMIPERF_DEFAULT_PORT, MMIPERF_DEFAULT_BANDWIDTH,                                   \
-        0, MMIPERF_DEFAULT_AMOUNT, NULL,                                                          \
-        NULL, IPERF_VERSION_2_0_13,                                                               \
+#define MMIPERF_CLIENT_ARGS_DEFAULT                                                              \
+    {                                                                                            \
+        { 0 }, MMIPERF_DEFAULT_PORT, MMIPERF_DEFAULT_BANDWIDTH, 0, MMIPERF_DEFAULT_AMOUNT, NULL, \
+        NULL,  IPERF_VERSION_2_0_13,                                                             \
     }
 
 /**
@@ -211,15 +210,15 @@ struct mmiperf_server_args
 };
 
 /** Initializer for @ref mmiperf_server_args. */
-#define MMIPERF_SERVER_ARGS_DEFAULT                                                             \
-    {                                                                                           \
-        { 0 }, MMIPERF_DEFAULT_PORT, NULL, NULL, IPERF_VERSION_2_0_13,                          \
+#define MMIPERF_SERVER_ARGS_DEFAULT                                    \
+    {                                                                  \
+        { 0 }, MMIPERF_DEFAULT_PORT, NULL, NULL, IPERF_VERSION_2_0_13, \
     }
 
 /**
  * Start a UDP iperf client.
  *
- * @param args  Iperf client arguments.
+ * @param args Iperf client arguments.
  *
  * @returns a handle to the client on success, or @c NULL on failure.
  */
@@ -228,7 +227,7 @@ mmiperf_handle_t mmiperf_start_udp_client(const struct mmiperf_client_args *args
 /**
  * Start a UDP iperf server.
  *
- * @param args  Iperf server arguments.
+ * @param args Iperf server arguments.
  *
  * @returns a handle to the server on success, or @c NULL on failure.
  */
@@ -237,7 +236,7 @@ mmiperf_handle_t mmiperf_start_udp_server(const struct mmiperf_server_args *args
 /**
  * Start a TCP iperf client.
  *
- * @param args  Iperf client arguments.
+ * @param args Iperf client arguments.
  *
  * @returns a handle to the client on success, or @c NULL on failure.
  */
@@ -246,7 +245,7 @@ mmiperf_handle_t mmiperf_start_tcp_client(const struct mmiperf_client_args *args
 /**
  * Start a TCP iperf server.
  *
- * @param args  Iperf server arguments.
+ * @param args Iperf server arguments.
  *
  * @returns a handle to the server on success, or @c NULL on failure.
  */
@@ -258,8 +257,8 @@ mmiperf_handle_t mmiperf_start_tcp_server(const struct mmiperf_server_args *args
  * This shall not be called after the report callback has been received for the given
  * session.
  *
- * @param handle    Handle to the iperf session to retrieve the report for.
- * @param report    Pointer to a report instance to receive the report.
+ * @param handle Handle to the iperf session to retrieve the report for.
+ * @param report Pointer to a report instance to receive the report.
  *
  * @returns @c true on success or @c false on error (e.g., the handle was invalid).
  */

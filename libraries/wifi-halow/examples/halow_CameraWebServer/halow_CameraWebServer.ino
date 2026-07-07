@@ -20,8 +20,9 @@
 // Enter your Halow credentials
 // ===========================
 
-const char* ssid     = "HT-H7608";
-const char* password = "123456789";
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
 
 ESP_EVENT_DECLARE_BASE(ESP_HTTP_SERVER_EVENT);
 //ESP_EVENT_DEFINE_BASE(ESP_HTTP_SERVER_EVENT);
@@ -95,8 +96,8 @@ void setup() {
   digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
 #endif
 
-  HaLow.init("US");
-  HaLow.begin(ssid, password);
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
   Serial.print("MAC:");
   Serial.print(HaLow.macAddress());
   Serial.println();

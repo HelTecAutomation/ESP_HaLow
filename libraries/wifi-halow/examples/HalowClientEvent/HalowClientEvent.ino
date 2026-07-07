@@ -1,5 +1,9 @@
 #include "HaLow.h"
 
+#define HALOW_REGION     "US"
+#define HALOW_AP_SSID    "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
+
 void HaLowEvent(HaLowEvent_t event)
 {
     Serial.printf("[HaLow-event] event: %d\r\n", event);
@@ -17,8 +21,8 @@ void HaLowEvent(HaLowEvent_t event)
         case ARDUINO_HALOW_EVENT_STA_DISCONNECTED:
             Serial.println("ARDUINO_HALOW_EVENT_STA_DISCONNECTED");
             break;
-        case ARDUINO_HALOW_EVENT_STA_GOT_IP:
-            Serial.println("HALOW_EVENT_STA_GOT_IP");
+        case ARDUINO_HALOW_EVENT_GOT_IP:
+            Serial.println("HALOW_EVENT_GOT_IP");
             Serial.print("IP:");
             Serial.println(HaLow.localIP());
             Serial.print("NetMask:");
@@ -26,8 +30,8 @@ void HaLowEvent(HaLowEvent_t event)
             Serial.print("Gateway:");
             Serial.println(HaLow.gatewayIP());
             break;
-        case ARDUINO_HALOW_EVENT_STA_LOST_IP:
-            Serial.println("ARDUINO_HALOW_EVENT_STA_LOST_IP");
+        case ARDUINO_HALOW_EVENT_LOST_IP:
+            Serial.println("ARDUINO_HALOW_EVENT_LOST_IP");
             break;
         default: break;
     }
@@ -44,8 +48,8 @@ void setup() {
 #endif
 
   HaLow.onEvent(HaLowEvent);
-  HaLow.init("US");
-  HaLow.begin("HT-H7608","123456789");
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
   Serial.println("Wait for Halow... ");
 }
 

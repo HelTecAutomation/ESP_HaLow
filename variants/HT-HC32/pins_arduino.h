@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "soc/soc_caps.h"
 
-#define HT-HC32 true
+#define HT_HC32 true
 #define USB_VID 0x303a
 #define USB_PID 0x1001
 

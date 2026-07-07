@@ -40,7 +40,7 @@ class HalowSTAClass
 
 public:
 
-    wl_status_t begin(const char* ssid, const char *passphrase, mmwlan_security_type_t security_type = MMWLAN_SAE,const char *region = "US");
+    wl_status_t begin(const char* ssid, const char *passphrase, enum mmwlan_security_type security_type = MMWLAN_SAE,const char *region = "US");
 
 	bool setDNS(IPAddress dns1, IPAddress dns2 = (uint32_t)0x00000000);  // sets DNS IP for all network interfaces
 
