@@ -68,7 +68,9 @@ Also you can talk in our forum: [http://community.heltec.cn/](http://community.h
 
 |   MCU   |                       Relative boards                        |
 | :-----: | :----------------------------------------------------------- |
-| ESP32-S3 | [ESP-HaLowCamera](https://heltec.org/project/ht-hc32/) |
+| ESP32-S3 | [HT-HC32](https://heltec.org/project/ht-hc32/) |
+| ESP32-S3 | [HT-HC33](https://heltec.org/project/ht-hc33/) |
+| ESP32-S3 | [HT-RC3268](https://heltec.org/project/ht-rc3268/) |
 
 ## 安装指南
 
