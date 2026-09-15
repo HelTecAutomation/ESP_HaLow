@@ -182,7 +182,7 @@ const struct mmwlan_s1g_channel_list s1g_channel_list_au_80211_revmf = {
 };
 
 #ifndef MM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU
-   #define MM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU s1g_channel_list_au_80211_2024
+   #define MM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU s1g_channel_list_au_80211_2020
 #endif
 
 /** List of valid S1G channels for Canada. */
