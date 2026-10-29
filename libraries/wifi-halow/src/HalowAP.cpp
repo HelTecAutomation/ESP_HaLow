@@ -165,15 +165,15 @@ bool HalowClass::AP(const char *ssid, const char *passphrase, uint16_t channel,i
     {
         case 1:
         case 2:
-            ap_args.pri_bw_mhz = 0;
+            ap_args.pri_bw_mhz = 1;
             ap_args.pri_1mhz_chan_idx = 0;
             break;
         case 4:
-            ap_args.pri_bw_mhz = 1;
+            ap_args.pri_bw_mhz = 2;
             ap_args.pri_1mhz_chan_idx = 2;
             break;
         case 8:
-            ap_args.pri_bw_mhz = 1;
+            ap_args.pri_bw_mhz = 2;
             ap_args.pri_1mhz_chan_idx = 3;
             break;
         default:
