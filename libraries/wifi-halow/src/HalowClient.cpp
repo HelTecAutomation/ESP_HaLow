@@ -19,7 +19,7 @@
 */
 
 #include "HalowClient.h"
-#include "Halow.h"
+#include "HaLow.h"
 #include <lwip/sockets.h>
 #include <lwip/netdb.h>
 #include <errno.h>

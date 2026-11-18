@@ -51,6 +51,8 @@ enum mmipal_status
     MMIPAL_NO_MEM,
     /** This functionality is not supported (e.g., due to build configuration). */
     MMIPAL_NOT_SUPPORTED,
+    /** The requested entry was not found. */
+    MMIPAL_NOT_FOUND,
 };
 
 /** Enumeration of link states. */
@@ -287,6 +289,55 @@ void mmipal_set_ext_link_status_callback(mmipal_ext_link_status_cb_fn_t fn, void
  * @param rx_packets Pointer to location to store total rx packets
  */
 void mmipal_get_link_packet_counts(uint32_t *tx_packets, uint32_t *rx_packets);
+
+/** Last measured RX signal information for a STA. */
+struct mmipal_sta_rssi
+{
+    /** RSSI of the last received data frame from the STA (dBm). */
+    int16_t rssi;
+    /** Background noise at the time of the last measurement (dBm). */
+    int8_t noise_dbm;
+    /** Bandwidth at which the last frame was received (MHz). */
+    uint8_t bw_mhz;
+    /** Frequency at which the last frame was received (100 kHz units). */
+    uint16_t freq_100khz;
+    /** Timestamp (ms) of the last measurement. */
+    uint32_t last_rx_ms;
+};
+
+/**
+ * Get the last RX signal information for a STA in AP mode.
+ *
+ * This is updated for every data frame received from the STA, so it requires
+ * traffic to flow between the STA and the AP. For RSSI before association use
+ * the management frame receive callback in the UMAC.
+ *
+ * @param mac       MAC address of the STA.
+ * @param rssi      Location to store the RX signal information.
+ *
+ * @returns @ref MMIPAL_SUCCESS on success, @ref MMIPAL_NOT_FOUND if no recent
+ *          measurement is available for the given MAC.
+ */
+enum mmipal_status mmipal_get_sta_rssi(const mmipal_mac_addr_t mac,
+                                       struct mmipal_sta_rssi *rssi);
+
+/** Statistics of newly delivered RX samples, indexed by 1/2/4/8 MHz. */
+#define MMIPAL_RX_SIGNAL_BANDS 4
+struct mmipal_rx_signal_bucket
+{
+    uint32_t count, noise_count;
+    uint32_t first_ms, last_ms;
+    int16_t rssi_min, rssi_max, noise_min, noise_max;
+    int64_t rssi_sum, rssi_sq_sum, noise_sum, noise_sq_sum;
+};
+
+/** Atomically take and clear interval statistics; last-value UI cache is retained.
+ * Samples are data delivered to mmipal, not all PHY attempts. Invalid RSSI is
+ * excluded; invalid noise is excluded independently (see noise_count).
+ */
+enum mmipal_status mmipal_take_rx_signal_stats(
+    const mmipal_mac_addr_t mac,
+    struct mmipal_rx_signal_bucket buckets[MMIPAL_RX_SIGNAL_BANDS]);
 
 /**
  * Set the QoS Traffic ID to use when transmitting.

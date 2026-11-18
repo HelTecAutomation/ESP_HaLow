@@ -207,12 +207,17 @@ struct mmiperf_server_args
     void *report_arg;
     /** Iperf version used to parse packet header. */
     enum iperf_version version;
+    /** TCP receive-session idle timeout in seconds (lwIP backend).
+     * Zero keeps the backend default. Does not expire the listening server.
+     * Ignored for UDP.
+     */
+    uint16_t tcp_idle_timeout_s;
 };
 
 /** Initializer for @ref mmiperf_server_args. */
 #define MMIPERF_SERVER_ARGS_DEFAULT                                    \
     {                                                                  \
-        { 0 }, MMIPERF_DEFAULT_PORT, NULL, NULL, IPERF_VERSION_2_0_13, \
+        { 0 }, MMIPERF_DEFAULT_PORT, NULL, NULL, IPERF_VERSION_2_0_13, 0, \
     }
 
 /**

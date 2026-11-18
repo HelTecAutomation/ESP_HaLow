@@ -1,9 +1,26 @@
 /*
-usage:
-IPERF_UDP_CLIENT: Run "iperf -s -p {IPERF_SERVER_PORT} -U" on the halow gateway before esp32 start,and set IPERF_SERVER_IP to gateway IP.
-IPERF_TCP_CLIENT: Run "iperf -s -p {IPERF_SERVER_PORT}" on the halow gateway before  esp32 start,and set IPERF_SERVER_IP to gateway IP.
-IPERF_UDP_SERVER: Run "iperf -c {IP} -p {IPERF_SERVER_PORT} -i 1 -u -b 20M" on the halow gateway after  esp32 started.
-IPERF_TCP_SERVER: Run "iperf -c {IP} -p {IPERF_SERVER_PORT} -i 1" on the halow gateway after esp32 started.
+ * ---------------------------------------------------------------------------
+ * 1. Radio role — HALOW_ROLE
+ * ---------------------------------------------------------------------------
+ *   HALOW_ROLE_STA           (0, default) ESP32 joins an existing HaLow AP
+ *   HALOW_ROLE_AP            (1)          ESP32 acts as a HaLow soft-AP
+ *   HALOW_ROLE_MESH_GATEWAY  (2)          ESP32 is an 802.11s mesh gateway
+ *   HALOW_ROLE_MESH_POINT    (3)          ESP32 joins as an 802.11s mesh point
+
+ * ---------------------------------------------------------------------------
+ * 2. IP address mode — STA and mesh point only
+ * ---------------------------------------------------------------------------
+ *   HALOW_USE_DHCP=1        (default) obtain the address over DHCP
+ *   HALOW_USE_DHCP=0        use the static address below (192.168.1.10)
+ *
+ * ---------------------------------------------------------------------------
+ * 3. iperf mode — IPERF_TYPE
+ * ---------------------------------------------------------------------------
+ * If the other halow peer is a linux device, the follow is needed.
+ * IPERF_UDP_CLIENT: Run "iperf -s -p {IPERF_SERVER_PORT} -U" on the halow peer before esp32 start, and set IPERF_SERVER_IP to peer IP.
+ * IPERF_TCP_CLIENT: Run "iperf -s -p {IPERF_SERVER_PORT}" on the halow peer before esp32 start, and set IPERF_SERVER_IP to peer IP.
+ * IPERF_UDP_SERVER: Run "iperf -c {IP} -p {IPERF_SERVER_PORT} -i 1 -u -b 20M" on the halow peer after esp32 started.
+ * IPERF_TCP_SERVER: Run "iperf -c {IP} -p {IPERF_SERVER_PORT} -i 1" on the halow peer after esp32 started.
 */
 #include <HaLow.h>
 #include "mmiperf.h"
@@ -12,29 +29,90 @@ IPERF_TCP_SERVER: Run "iperf -c {IP} -p {IPERF_SERVER_PORT} -i 1" on the halow g
 #include "lwip/sys.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
-#define HALOW_REGION     "US"
-#define HALOW_AP_SSID    "HaLow-AP"
-#define HALOW_PASSWORD   "heltec.org"
-
 /* ------------------------ Configuration options ------------------------ */
+
+
+#define HALOW_ROLE_STA           0
+#define HALOW_ROLE_AP            1
+#define HALOW_ROLE_MESH_GATEWAY  2
+#define HALOW_ROLE_MESH_POINT    3
+#define MESH_GATEWAY             HALOW_ROLE_MESH_GATEWAY
+#define MESH_POINT               HALOW_ROLE_MESH_POINT
+#ifndef HALOW_ROLE
+#define HALOW_ROLE      HALOW_ROLE_STA
+#endif
 
 /** Iperf configurations. */
 enum iperf_type
 {
     IPERF_TCP_SERVER,   /**< TCP server (RX) */
-    IPERF_UDP_SERVER,    /**< UDP server (RX) */
+    IPERF_UDP_SERVER,   /**< UDP server (RX) */
     IPERF_TCP_CLIENT,   /**< TCP client (TX) */
     IPERF_UDP_CLIENT,   /**< UDP client (TX) */
 };
-#define IPERF_TYPE IPERF_TCP_SERVER
+/*
+ * Type of iperf instance to start:
+ *   IPERF_TCP_SERVER, IPERF_UDP_SERVER, IPERF_TCP_CLIENT, IPERF_UDP_CLIENT
+ *
+ * Can also be overridden with -DIPERF_TYPE=IPERF_UDP_CLIENT.
+ */
 #ifndef IPERF_TYPE
-/** Type of iperf instance to start. */
-#define IPERF_TYPE                      IPERF_UDP_CLIENT
+#define IPERF_TYPE      IPERF_TCP_SERVER
+#endif
+
+#define HALOW_REGION     "US"
+#define HALOW_SSID       "HaLow-AP"
+#define HALOW_PASSWORD   "heltec.org"
+
+/* AP mode configuration. */
+#ifndef HALOW_CHANNEL
+#define HALOW_CHANNEL    28
+#endif
+#ifndef HALOW_BANDWIDTH
+#define HALOW_BANDWIDTH  8
+#endif
+#ifndef HALOW_MAX_STAS
+#define HALOW_MAX_STAS   4
+#endif
+
+#ifndef HALOW_USE_DHCP
+#ifdef HALOW_POINT_USE_DHCP
+#define HALOW_USE_DHCP HALOW_POINT_USE_DHCP
+#else
+#define HALOW_USE_DHCP 1
+#endif
+#endif
+#ifndef HALOW_POINT_USE_DHCP
+#define HALOW_POINT_USE_DHCP HALOW_USE_DHCP
+#endif
+
+/* AP / mesh gateway network configuration. */
+IPAddress gateway_ip(192, 168, 1, 1);
+IPAddress netmask(255, 255, 255, 0);
+IPAddress dns_primary(8, 8, 8, 8);
+IPAddress dns_secondary(8, 8, 4, 4);
+IPAddress dhcp_lease_start(192, 168, 1, 100);
+IPAddress dhcp_lease_end(192, 168, 1, 150);
+
+/* STA / mesh point static IP. */
+IPAddress static_ip(192, 168, 1, 10);
+
+/* Start the embedded DHCP server in AP and mesh gateway modes. */
+#ifndef IPERF_ENABLE_DHCP_SERVER
+#ifdef IPERF_AP_ENABLE_DHCP_SERVER
+#define IPERF_ENABLE_DHCP_SERVER IPERF_AP_ENABLE_DHCP_SERVER
+#else
+#define IPERF_ENABLE_DHCP_SERVER 1
+#endif
 #endif
 
 #ifndef IPERF_SERVER_IP
 /** IP address of server to connect to when in client mode. */
-#define IPERF_SERVER_IP                 "192.168.0.78"
+#if HALOW_ROLE == HALOW_ROLE_AP || HALOW_ROLE == HALOW_ROLE_MESH_GATEWAY
+#define IPERF_SERVER_IP                 "192.168.1.100"
+#elif HALOW_ROLE == HALOW_ROLE_STA || HALOW_ROLE == HALOW_ROLE_MESH_POINT
+#define IPERF_SERVER_IP                 "192.168.1.1"
+#endif
 #endif
 // #define IPERF_TIME_AMOUNT -100
 #ifndef IPERF_TIME_AMOUNT
@@ -49,8 +127,38 @@ enum iperf_type
 /** Specifies the port to listen on in server mode. */
 #define IPERF_SERVER_PORT               1111
 #endif
+#ifndef IPERF_UDP_BW_KBPS
+/** Target bandwidth for UDP client mode (kbps). */
+#define IPERF_UDP_BW_KBPS               10000
+#endif
 
 /* ------------------------ End of configuration options ------------------------ */
+
+static const char *halow_role_name(void)
+{
+#if HALOW_ROLE == HALOW_ROLE_STA
+    return "STA";
+#elif HALOW_ROLE == HALOW_ROLE_AP
+    return "AP";
+#elif HALOW_ROLE == HALOW_ROLE_MESH_GATEWAY
+    return "mesh_gateway";
+#elif HALOW_ROLE == HALOW_ROLE_MESH_POINT
+    return "mesh_point";
+#else
+    return "unknown";
+#endif
+}
+
+#if (HALOW_ROLE == HALOW_ROLE_AP || HALOW_ROLE == HALOW_ROLE_MESH_GATEWAY) && IPERF_ENABLE_DHCP_SERVER
+static bool start_embedded_dhcp_server(void)
+{
+    if (HaLow.isDhcpServerEnabled())
+    {
+        return true;
+    }
+    return HaLow.enableDhcpServer(dhcp_lease_start, dhcp_lease_end, dns_primary);
+}
+#endif
 
 /** Array of power of 10 unit specifiers. */
 static const char units[] = {' ', 'K', 'M', 'G', 'T'};
@@ -147,6 +255,7 @@ static void start_udp_client(void)
 
     MMOSAL_ASSERT(server_port <= UINT16_MAX);
     args.server_port = server_port;
+    args.target_bw = IPERF_UDP_BW_KBPS;
     int amount = IPERF_TIME_AMOUNT;
     args.amount = amount;
     if (args.amount < 0)
@@ -230,22 +339,97 @@ static void start_udp_server(void)
     }
 }
 
+static const char *iperf_type_name(enum iperf_type type)
+{
+    switch (type)
+    {
+    case IPERF_TCP_SERVER:
+        return "TCP server";
+    case IPERF_UDP_SERVER:
+        return "UDP server";
+    case IPERF_TCP_CLIENT:
+        return "TCP client";
+    case IPERF_UDP_CLIENT:
+        return "UDP client";
+    default:
+        return "unknown";
+    }
+}
+
 void setup()
 {
   Serial.begin(115200);
 
-  Serial.print("Connecting to ");
-  Serial.println(HALOW_AP_SSID);
-  
+  Serial.printf("HaLow role: %s\r\n", halow_role_name());
+
+#if HALOW_ROLE == HALOW_ROLE_STA
+  Serial.printf("STA IP mode: %s\r\n", HALOW_USE_DHCP ? "DHCP" : "static");
+#elif HALOW_ROLE == HALOW_ROLE_MESH_GATEWAY || HALOW_ROLE == HALOW_ROLE_MESH_POINT
+  Serial.printf("Mesh ID: %s, channel: %u, bandwidth: %u MHz\r\n",
+                HALOW_SSID, HALOW_CHANNEL, HALOW_BANDWIDTH);
+#if HALOW_ROLE == HALOW_ROLE_MESH_POINT
+  Serial.printf("Mesh point IP mode: %s\r\n",
+                HALOW_USE_DHCP ? "DHCP" : "static");
+#endif
+#endif
+  Serial.printf("Iperf mode: %s\r\n", iperf_type_name((enum iperf_type)IPERF_TYPE));
+
 #ifdef HT_RC3268
   //enable WiFiHalow LDO
   pinMode(HALOW_LDO_CTRL,OUTPUT);
   digitalWrite(HALOW_LDO_CTRL,HALOW_LDO_ENABLE);
 #endif
 
+#if HALOW_ROLE == HALOW_ROLE_AP
+  if (!HaLow.config(gateway_ip, gateway_ip, netmask, dns_primary, dns_secondary)) {
+    Serial.println("HaLow AP static IP configuration failed");
+  }
 
   HaLow.init(HALOW_REGION);
-  HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
+  if (!HaLow.AP(HALOW_SSID, HALOW_PASSWORD, HALOW_CHANNEL,
+                HALOW_BANDWIDTH, HALOW_MAX_STAS)) {
+    Serial.println("Failed to start HaLow AP");
+    return;
+  }
+#elif HALOW_ROLE == HALOW_ROLE_MESH_GATEWAY
+  if (!HaLow.config(gateway_ip, gateway_ip, netmask, dns_primary, dns_secondary)) {
+    Serial.println("HaLow mesh gateway static IP configuration failed");
+  }
+
+  if (!HaLow.meshBegin(HALOW_SSID, HALOW_PASSWORD, HALOW_CHANNEL, HALOW_BANDWIDTH,
+                         HALOW_REGION)) {
+    Serial.println("Failed to start mesh");
+    return;
+  }
+
+#if IPERF_ENABLE_DHCP_SERVER
+  if (!start_embedded_dhcp_server()) {
+    Serial.println("DHCP server not ready yet, will retry after link up");
+  }
+#endif
+#elif HALOW_ROLE == HALOW_ROLE_MESH_POINT
+#if !HALOW_USE_DHCP
+  if (!HaLow.config(static_ip, gateway_ip, netmask, dns_primary, dns_secondary)) {
+    Serial.println("HaLow mesh point static IP configuration failed");
+  }
+#endif
+
+  if (!HaLow.meshBegin(HALOW_SSID, HALOW_PASSWORD, HALOW_CHANNEL, HALOW_BANDWIDTH,
+                         HALOW_REGION)) {
+    Serial.println("Failed to start mesh");
+    return;
+  }
+#else
+  Serial.print("Connecting to ");
+  Serial.println(HALOW_SSID);
+#if !HALOW_USE_DHCP
+  if (!HaLow.config(static_ip, gateway_ip, netmask, dns_primary, dns_secondary)) {
+    Serial.println("HaLow STA static IP configuration failed");
+  }
+#endif
+  HaLow.init(HALOW_REGION);
+  HaLow.begin(HALOW_SSID, HALOW_PASSWORD);
+#endif
 
   while (HaLow.status() != WL_CONNECTED) {
     delay(500);
@@ -265,8 +449,18 @@ void setup()
   Serial.print("DNS: ");
   Serial.println(HaLow.dnsIP());
 
-  Serial.printf("\r\n\r\nMorse Iperf Demo\r\n\r\n");
+#if (HALOW_ROLE == HALOW_ROLE_AP || HALOW_ROLE == HALOW_ROLE_MESH_GATEWAY) && IPERF_ENABLE_DHCP_SERVER
+  if (!start_embedded_dhcp_server()) {
+    Serial.println("HaLow DHCP server start failed");
+  } else {
+    Serial.printf("HaLow DHCP server started, lease %s - %s\r\n",
+                  dhcp_lease_start.toString().c_str(),
+                  dhcp_lease_end.toString().c_str());
+  }
+#endif
 
+  Serial.printf("\r\n\r\nMorse Iperf Demo\r\n\r\n");
+  delay(1000);
   enum iperf_type iperf_mode = IPERF_TYPE;
 
   switch (iperf_mode)
@@ -294,3 +488,4 @@ void setup()
 void loop()
 {
 }
+

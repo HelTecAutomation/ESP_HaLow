@@ -24,6 +24,15 @@
 #ifndef ESP32HALOWGENERIC_H_
 #define ESP32HALOWGENERIC_H_
 
+/*
+ * The precompiled mesh SDK libraries (libmmipal/libmm_shims) are built with
+ * link callback support, which matches the ESP32 Arduino core lwIP build.
+ * Keep struct netif identical so mmipal_data and all netif fields stay aligned.
+ */
+#ifndef LWIP_NETIF_LINK_CALLBACK
+#define LWIP_NETIF_LINK_CALLBACK 1
+#endif
+
 #include "esp_err.h"
 #include "esp_event.h"
 #include <functional>
@@ -36,6 +45,16 @@
 #include "mmipal.h"
 #include "mmosal.h"
 #include "loadconfig.h"
+
+/*
+ * Compatibility aliases for the pre-mesh Arduino API. The mesh SDK removed the
+ * mmwlan_security_type_t typedef and the MMWLAN_OTHER enum value. The Arduino
+ * scan API still exposes them, so keep them as local compatibility shims.
+ */
+typedef enum mmwlan_security_type mmwlan_security_type_t;
+#ifndef MMWLAN_OTHER
+#define MMWLAN_OTHER ((enum mmwlan_security_type)3)
+#endif
 //#include "mmwlan_regdb.h"
 #include "WiFiType.h"
 
@@ -56,7 +75,12 @@ typedef enum {
 	HALOW_EVENT_STA_CONNECTED,
 	HALOW_EVENT_STA_DISCONNECTED,
 	HALOW_EVENT_GOT_IP,
-	HALOW_EVENT_LOST_IP
+	HALOW_EVENT_LOST_IP,
+	HALOW_EVENT_MESH_START,
+	HALOW_EVENT_MESH_CONNECTED,
+	HALOW_EVENT_MESH_DISCONNECTED,
+	HALOW_EVENT_MESH_PEER_CONNECTED,
+	HALOW_EVENT_MESH_PEER_DISCONNECTED
 } wifi_halow_event_t;
 
 typedef enum {
@@ -69,6 +93,11 @@ typedef enum {
 	ARDUINO_HALOW_EVENT_STA_DISCONNECTED,
 	ARDUINO_HALOW_EVENT_GOT_IP,
 	ARDUINO_HALOW_EVENT_LOST_IP,
+	ARDUINO_HALOW_EVENT_MESH_START,
+	ARDUINO_HALOW_EVENT_MESH_CONNECTED,
+	ARDUINO_HALOW_EVENT_MESH_DISCONNECTED,
+	ARDUINO_HALOW_EVENT_MESH_PEER_CONNECTED,
+	ARDUINO_HALOW_EVENT_MESH_PEER_DISCONNECTED,
 	ARDUINO_HALOW_EVENT_MAX,
 } arduino_halow_event_id_t;
 
@@ -113,6 +142,15 @@ class HalowGenericClass
     static int waitStatusBits(int bits, uint32_t timeout_ms);
 
     int32_t channel(void);
+
+    /*
+     * Select an operating channel from the current regulatory domain.
+     * If bandwidth_mhz is non-zero an exact channel/bandwidth match is
+     * preferred, otherwise the channel entry's bandwidth is used.
+     */
+    static bool selectChannel(uint16_t channel, uint8_t bandwidth_mhz,
+                              uint16_t *op_class, uint16_t *s1g_chan_num,
+                              uint8_t *primary_bw_mhz, uint8_t *primary_1mhz_idx);
 
     void persistent(bool persistent);
     void enableLongRange(bool enable);

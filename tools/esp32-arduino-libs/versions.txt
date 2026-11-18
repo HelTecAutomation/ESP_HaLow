@@ -1,0 +1,38 @@
+lib-builder: idf-release_v5.1 idf-release_v5.3 d86a9ea
+esp-idf: 4b1ae715b8
+arduino: release/v3.0.x 3f3e183c9
+tinyusb: master 719252a00
+chmorgan__esp-libhelix-mp3: 1.0.3
+espressif__cbor: 0.6.1~4
+espressif__esp32-camera:
+espressif__esp_daylight: 1.0.1
+espressif__esp_diag_data_store: 1.1.0
+espressif__esp_diagnostics: 1.3.4
+espressif__esp-dsp: 1.4.12
+espressif__esp_insights: 1.3.3
+espressif__esp_jpeg: 1.3.2
+espressif__esp-modbus: 1.0.18
+espressif__esp_modem: 1.4.2
+espressif__esp-nn: 1.4.2
+espressif__esp_rainmaker: 1.15.0
+espressif__esp_schedule: 1.3.3
+espressif__esp_secure_cert_mgr: 2.9.3
+espressif__esp-sr: 1.9.5
+espressif__esp-tflite-micro: 1.3.7
+espressif__esp-zboss-lib: 1.6.0
+espressif__esp-zigbee-lib: 1.6.0
+espressif__jsmn: 1.1.0
+espressif__json_generator: 1.1.2
+espressif__json_parser: 1.0.3
+espressif__libsodium: 1.0.22~1
+espressif__mdns: 1.15.1
+espressif__network_provisioning: 1.0.5
+espressif__qrcode: 0.1.0~2
+espressif__rmaker_cmd_resp: 1.0.0
+espressif__rmaker_common: 1.12.0
+espressif__rmaker_common_events: 1.2.0
+espressif__rmaker_console: 1.1.0
+espressif__rmaker_system_ctrl: 1.0.0
+espressif__rmaker_time_sync: 1.0.2
+espressif__rmaker_work_queue: 1.1.0
+joltwallet__littlefs: 1.22.1

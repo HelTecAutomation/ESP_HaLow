@@ -31,14 +31,16 @@ void loop() {
   } else {
       Serial.print(n);
       Serial.println(" networks found");
-      Serial.printf("Nr | %-32.32s | RSSI | %-17.17s | Encryption\r\n","SSID","BSSID");
+      Serial.printf("Nr | %-32.32s | RSSI | Noise | %-17.17s | Encryption\r\n","SSID","BSSID");
       for (int i = 0; i < n; i++) {
-          // Print SSID and RSSI for each network found
+          // Print SSID, RSSI and noise for each network found
           Serial.printf("%2d",i + 1);
           Serial.print(" | ");
           Serial.printf("%-32.32s", HaLow.SSID(i).c_str());
           Serial.print(" | ");
           Serial.printf("%4ld", HaLow.RSSI(i));
+          Serial.print(" | ");
+          Serial.printf("%4d", HaLow.noise(i));
           Serial.print(" | ");
           Serial.print(HaLow.BSSIDstr(i));
           Serial.print(" | ");

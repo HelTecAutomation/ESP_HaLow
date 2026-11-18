@@ -188,8 +188,10 @@ void writejpg(fs::FS &fs, const char * path, const uint8_t *buf, size_t size){
       Serial.println("Failed to open file for writing");
       return;
     }
-    file.write(buf, size);
-    Serial.printf("Saved file to path: %s\r\n", path);
+    size_t written = file.write(buf, size);
+    file.close();
+    Serial.printf("Saved file to path: %s (%u/%u bytes)\r\n",
+                  path, (unsigned)written, (unsigned)size);
 }
 
 int readFileNum(fs::FS &fs, const char * dirname){
@@ -200,14 +202,16 @@ int readFileNum(fs::FS &fs, const char * dirname){
     }
     if(!root.isDirectory()){
         Serial.println("Not a directory");
+        root.close();
         return -1;
     }
 
+    int num = 0;
     File file = root.openNextFile();
-    int num=0;
     while(file){
-      file = root.openNextFile();
-      num++;
+        num++;
+        file = root.openNextFile();
     }
-    return num;  
+    root.close();
+    return num;
 }

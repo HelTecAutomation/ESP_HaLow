@@ -3,7 +3,7 @@
 */
 
 #include <HaLow.h>
-#include <HaLowClient.h>
+#include <HalowClient.h>
 #include <WebServer.h>
 #include <Update.h>
 
@@ -91,12 +91,12 @@ void loop(void) {
     t=millis();
     if(HaLow.status() != WL_CONNECTED)
     {
-      digitalWrite(LED,0);
+      digitalWrite(LED_BUILTIN,0);
     }
     else
     {
       Serial.printf("[time %u s] halow rssi %d\r\n",millis()/1000,HaLow.RSSI());
-      digitalWrite(LED,1);
+      digitalWrite(LED_BUILTIN,1);
     }
   }
 }

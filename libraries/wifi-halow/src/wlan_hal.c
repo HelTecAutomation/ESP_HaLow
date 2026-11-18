@@ -1,28 +1,34 @@
 /*
  * Copyright 2021-2023 Morse Micro
  *
- * This file is licensed under terms that can be found in the LICENSE.md file in the root
- * directory of the Morse Micro IoT SDK software package.
+ * SPDX-License-Identifier: Apache-2.0
  */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include "Arduino.h"
-#include "mmhal.h"
+
+/* Pull in the board variant pin mapping (CONFIG_MM_* macros). */
+#include "halow_config.h"
+
+#include "mmhal_wlan.h"
 #include "mmosal.h"
+#include "mmutils.h"
 
 #include "esp_system.h"
-#include "esp_random.h"
 #include "driver/gpio.h"
+#include "esp_mac.h"
 #include "driver/spi_master.h"
 #include "driver/spi_common.h"
-#include "halow_config.h"
-/** 10x8bit training seq */
+
+/**
+ * The number of bytes to send as part of @ref mmhal_wlan_send_training_seq for SD over SPI.
+ * This must be at least 74 bits (>= 10 bytes), see section 6.4.1.1 of the SD spec
+ * "Physical Layer Simplified Specification Version 9.10" for more detail.
+ */
 #define BYTE_TRAIN 16
 
-/** Binary Semaphore for indicating DMA transaction complete */
-static struct mmosal_semb *dma_semb_handle;
+MM_STATIC_ASSERT((BYTE_TRAIN >= 10), "BYTE_TRAIN must be at least 10.");
 
 /** SPI hw interrupt handler. Must be set before enabling irq */
 static mmhal_irq_handler_t spi_irq_handler = NULL;
@@ -31,10 +37,10 @@ static mmhal_irq_handler_t spi_irq_handler = NULL;
 static mmhal_irq_handler_t busy_irq_handler = NULL;
 
 static spi_device_handle_t spi_handle;
+static bool spi_bus_acquired;
 
 static void wlan_hal_gpio_init(void)
 {
-/*
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
@@ -57,18 +63,6 @@ static void wlan_hal_gpio_init(void)
     io_conf.pin_bit_mask = (1ull << CONFIG_MM_SPI_IRQ);
     io_conf.pull_down_en = 0;
     gpio_config(&io_conf);
-*/
-    pinMode(CONFIG_MM_WAKE,OUTPUT);
-    pinMode(CONFIG_MM_SPI_CS,OUTPUT);
-    pinMode(CONFIG_MM_BUSY,INPUT);
-    pinMode(CONFIG_MM_SPI_IRQ,INPUT);
-    pinMode(CONFIG_MM_RESET_N,OUTPUT);
-    digitalWrite(CONFIG_MM_RESET_N,0);
-    delay(10);
-    digitalWrite(CONFIG_MM_RESET_N,1);
-    delay(10);
-
-
 }
 
 static void wlan_hal_spi_init(void)
@@ -107,14 +101,14 @@ static void wlan_hal_spi_init(void)
     }
 
     /* The actual clock frequency may not be the one that was set as it is re-calculated by the
-     * driver to the nearest hardware-compatible number. Importantly it is the "nearest", so it could be above
-     * the value set. */
+     * driver to the nearest hardware-compatible number. Importantly it is the "nearest", so it
+     * could be above the value set. */
     int actual_freq_khz = 0;
     spi_device_get_actual_freq(spi_handle, &actual_freq_khz);
-    //printf("Actual SPI CLK %dkHz\n", actual_freq_khz);
+    printf("Actual SPI CLK %dkHz\n", actual_freq_khz);
 }
 
-void wlan_hal_spi_deinit(void)
+static void wlan_hal_spi_deinit(void)
 {
     esp_err_t ret = spi_bus_remove_device(spi_handle);
     if (ret != ESP_OK)
@@ -142,7 +136,7 @@ void wlan_hal_spi_deinit(void)
  * duration](https://docs.espressif.com/projects/esp-idf/en/v5.1.1/esp32s3/api-reference/peripherals/spi_master.html#transaction-duration)
  * section of the docs.
  */
-#define INTERRUPT_TRANSFER_MIN_LENGTH 75
+#define INTERRUPT_TRANSFER_MIN_LENGTH 4096
 
 static void spi_master_rw(const uint8_t *w_data, uint8_t *r_data, size_t len)
 {
@@ -163,7 +157,7 @@ static void spi_master_rw(const uint8_t *w_data, uint8_t *r_data, size_t len)
         err = spi_device_transmit(spi_handle, &trans_desc);
     }
 
-    if (err!= ESP_OK)
+    if (err != ESP_OK)
     {
         printf("SPI rw error = %x\n", err);
     }
@@ -179,19 +173,37 @@ void mmhal_wlan_hard_reset(void)
 
 void mmhal_wlan_spi_cs_assert(void)
 {
+    if (!spi_bus_acquired)
+    {
+        (void)spi_device_acquire_bus(spi_handle, portMAX_DELAY);
+        spi_bus_acquired = true;
+    }
     gpio_set_level(CONFIG_MM_SPI_CS, 0);
 }
 
 void mmhal_wlan_spi_cs_deassert(void)
 {
     gpio_set_level(CONFIG_MM_SPI_CS, 1);
+    if (spi_bus_acquired)
+    {
+        spi_device_release_bus(spi_handle);
+        spi_bus_acquired = false;
+    }
 }
 
 uint8_t mmhal_wlan_spi_rw(uint8_t data)
 {
-    uint8_t readval;
-    spi_master_rw(&data, &readval, 1);
-    return readval;
+    spi_transaction_t trans = { 0 };
+    trans.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    trans.length = 8;
+    trans.tx_data[0] = data;
+
+    if (spi_device_polling_transmit(spi_handle, &trans) != ESP_OK)
+    {
+        return 0xFF;
+    }
+
+    return trans.rx_data[0];
 }
 
 void mmhal_wlan_spi_read_buf(uint8_t *buf, unsigned len)
@@ -204,7 +216,6 @@ void mmhal_wlan_spi_write_buf(const uint8_t *buf, unsigned len)
     spi_master_rw(buf, NULL, len);
 }
 
-
 void mmhal_wlan_send_training_seq(void)
 {
     mmhal_wlan_spi_cs_deassert();
@@ -213,10 +224,8 @@ void mmhal_wlan_send_training_seq(void)
      * It results is a reduction in the time between bytes of ~85% (316ns -> 48ns).
      * Could not get this to work for the other transactions however.
      */
-    uint8_t buf[BYTE_TRAIN] = {
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-    };
+    uint8_t buf[BYTE_TRAIN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
     spi_master_rw(buf, NULL, BYTE_TRAIN);
 }
 
@@ -247,11 +256,7 @@ void mmhal_wlan_init(void)
 {
     wlan_hal_gpio_init();
     wlan_hal_spi_init();
-
-    dma_semb_handle = mmosal_semb_create("dma_semb_handle");
     /* Raise the RESET_N line to enable the WLAN transceiver. */
-    gpio_set_level(CONFIG_MM_RESET_N, 0);
-    delay(100);
     gpio_set_level(CONFIG_MM_RESET_N, 1);
 }
 
@@ -272,28 +277,11 @@ void mmhal_wlan_deinit(void)
 void mmhal_wlan_wake_assert(void)
 {
     gpio_set_level(CONFIG_MM_WAKE, 1);
-    // 等待芯片拉高 BUSY 确认苏醒，最多等 50ms
-    int retry = 500;
-    while (retry-- > 0 && !gpio_get_level(CONFIG_MM_BUSY)) {
-        esp_rom_delay_us(100);
-    }
-    if (retry < 0) {
-        printf("Wake assert timed out waiting for BUSY\r\n");
-    }
 }
 
 void mmhal_wlan_wake_deassert(void)
 {
-    int retry = 500;
-    while (retry-- > 0 && gpio_get_level(CONFIG_MM_BUSY)) {
-        esp_rom_delay_us(100);
-    }
-    if (retry < 0) {
-        printf("Dewake assert timed out waiting for BUSY\r\n");
-        return;
-    }
     gpio_set_level(CONFIG_MM_WAKE, 0);
-    //halow_esp_sleep();
 }
 
 bool mmhal_wlan_busy_is_asserted(void)
@@ -319,7 +307,34 @@ void mmhal_wlan_set_busy_irq_enabled(bool enabled)
     }
 }
 
+/**
+ * Generate the HaLow MAC address from the ESP32 WiFi eFuse MAC.
+ * The OUI is fixed to 78:72:64 and the high nibble of the fourth byte is 0xE.
+ *
+ * @param mac_addr Location where the MAC address will be stored.
+ */
+static void generate_stable_mac_addr(uint8_t *mac_addr)
+{
+    ESP_ERROR_CHECK(esp_efuse_mac_get_default(mac_addr));
+
+    mac_addr[0] = 0x78;
+    mac_addr[1] = 0x72;
+    mac_addr[2] = 0x64;
+    mac_addr[3] = (mac_addr[3] & 0x0F) | 0xE0;
+}
+
+void mmhal_read_mac_addr(uint8_t *mac_addr)
+{
+    generate_stable_mac_addr(mac_addr);
+}
+
 const struct mmhal_chip *mmhal_get_chip(void)
 {
+    /* This is a define that is set by the build system in idf.py menuconfig to select the Morse
+     * chip type. See the API documentation for mmhal_get_chip() for more information. */
+#if CONFIG_MMHAL_CHIP_TYPE_MM6108
     return &mmhal_mm6108;
+#elif CONFIG_MMHAL_CHIP_TYPE_MM8108
+    return &mmhal_mm8108;
+#endif
 }

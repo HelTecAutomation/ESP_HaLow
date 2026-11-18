@@ -20,7 +20,7 @@ uint8_t tx_buff[2048];
 
 void HaLowEvent(HaLowEvent_t event)
 {
-    Serial.printf("[HaLow-event] event: %d\r\n", event);
+    Serial.printf("[HaLow-event] event: %d - %s\r\n", event, HaLow.eventName(event));
 
     switch (event) {
         case ARDUINO_HALOW_EVENT_SCAN_DONE: 

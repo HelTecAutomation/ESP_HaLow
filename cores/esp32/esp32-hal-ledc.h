@@ -26,24 +26,53 @@ extern "C" {
 #include <stdbool.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "hal/ledc_types.h"
 
 typedef enum {
-    NOTE_C, NOTE_Cs, NOTE_D, NOTE_Eb, NOTE_E, NOTE_F, NOTE_Fs, NOTE_G, NOTE_Gs, NOTE_A, NOTE_Bb, NOTE_B, NOTE_MAX
+  NOTE_C,
+  NOTE_Cs,
+  NOTE_D,
+  NOTE_Eb,
+  NOTE_E,
+  NOTE_F,
+  NOTE_Fs,
+  NOTE_G,
+  NOTE_Gs,
+  NOTE_A,
+  NOTE_Bb,
+  NOTE_B,
+  NOTE_MAX
 } note_t;
 
 typedef void (*voidFuncPtr)(void);
-typedef void (*voidFuncPtrArg)(void*);
+typedef void (*voidFuncPtrArg)(void *);
 
 typedef struct {
-    uint8_t pin;                    // Pin assigned to channel
-    uint8_t channel;                // Channel number
-    uint8_t channel_resolution;     // Resolution of channel
-    voidFuncPtr fn;
-    void* arg;
+  uint8_t pin;                 // Pin assigned to channel
+  uint8_t channel;             // Channel number
+  uint8_t channel_resolution;  // Resolution of channel
+  voidFuncPtr fn;
+  void *arg;
 #ifndef SOC_LEDC_SUPPORT_FADE_STOP
-    SemaphoreHandle_t lock;        //xSemaphoreCreateBinary
+  SemaphoreHandle_t lock;  //xSemaphoreCreateBinary
 #endif
 } ledc_channel_handle_t;
+
+/**
+ * @brief Get the LEDC clock source.
+ *
+ * @return LEDC clock source.
+ */
+ledc_clk_cfg_t ledcGetClockSource(void);
+
+/**
+ * @brief Set the LEDC clock source.
+ *
+ * @param source LEDC clock source to set.
+ *
+ * @return true if LEDC clock source was successfully set, false otherwise.
+ */
+bool ledcSetClockSource(ledc_clk_cfg_t source);
 
 /**
  * @brief Attach a pin to the LEDC driver, with a given frequency and resolution.
@@ -78,6 +107,16 @@ bool ledcAttachChannel(uint8_t pin, uint32_t freq, uint8_t resolution, uint8_t c
  * @return true if duty cycle was successfully set, false otherwise.
  */
 bool ledcWrite(uint8_t pin, uint32_t duty);
+
+/**
+ * @brief Set the duty cycle of a given channel.
+ *
+ * @param channel LEDC channel
+ * @param duty duty cycle to set
+ *
+ * @return true if duty cycle was successfully set, false otherwise.
+ */
+bool ledcWriteChannel(uint8_t channel, uint32_t duty);
 
 /**
  * @brief Sets the duty to 50 % PWM tone on selected frequency.
@@ -131,11 +170,11 @@ bool ledcDetach(uint8_t pin);
 
 /**
  * @brief Change the frequency and resolution of a given LEDC pin.
- * 
+ *
  * @param pin GPIO pin
  * @param freq frequency of PWM signal
  * @param resolution resolution for LEDC pin
- * 
+ *
  * @return frequency configured for the LEDC channel.
  *         If ``0`` is returned, error occurs and LEDC pin was not configured.
  */
@@ -143,10 +182,10 @@ uint32_t ledcChangeFrequency(uint8_t pin, uint32_t freq, uint8_t resolution);
 
 /**
  * @brief Sets inverting of the output signal for a given LEDC pin.
- * 
+ *
  * @param pin GPIO pin
  * @param out_invert select, if output should be inverted (true = inverting output).
- * 
+ *
  * @return true if output inverting was successfully set, false otherwise.
  */
 bool ledcOutputInvert(uint8_t pin, bool out_invert);
@@ -154,42 +193,42 @@ bool ledcOutputInvert(uint8_t pin, bool out_invert);
 //Fade functions
 /**
  * @brief Setup and start a fade on a given LEDC pin.
- * 
+ *
  * @param pin GPIO pin
  * @param start_duty initial duty cycle of the fade
  * @param target_duty target duty cycle of the fade
  * @param max_fade_time_ms maximum fade time in milliseconds
- * 
+ *
  * @return true if fade was successfully set and started, false otherwise.
  */
 bool ledcFade(uint8_t pin, uint32_t start_duty, uint32_t target_duty, int max_fade_time_ms);
 
 /**
  * @brief Setup and start a fade on a given LEDC pin with a callback function.
- * 
+ *
  * @param pin GPIO pin
  * @param start_duty initial duty cycle of the fade
  * @param target_duty target duty cycle of the fade
  * @param max_fade_time_ms maximum fade time in milliseconds
  * @param userFunc callback function to be called after fade is finished
- * 
+ *
  * @return true if fade was successfully set and started, false otherwise.
  */
 bool ledcFadeWithInterrupt(uint8_t pin, uint32_t start_duty, uint32_t target_duty, int max_fade_time_ms, void (*userFunc)(void));
 
 /**
  * @brief Setup and start a fade on a given LEDC pin with a callback function and argument.
- * 
+ *
  * @param pin GPIO pin
  * @param start_duty initial duty cycle of the fade
  * @param target_duty target duty cycle of the fade
  * @param max_fade_time_ms maximum fade time in milliseconds
  * @param userFunc callback function to be called after fade is finished
  * @param arg argument to be passed to the callback function
- * 
+ *
  * @return true if fade was successfully set and started, false otherwise.
  */
-bool ledcFadeWithInterruptArg(uint8_t pin, uint32_t start_duty, uint32_t target_duty, int max_fade_time_ms, void (*userFunc)(void*), void * arg);
+bool ledcFadeWithInterruptArg(uint8_t pin, uint32_t start_duty, uint32_t target_duty, int max_fade_time_ms, void (*userFunc)(void *), void *arg);
 
 #ifdef __cplusplus
 }

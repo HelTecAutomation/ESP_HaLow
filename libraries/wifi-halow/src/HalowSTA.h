@@ -72,6 +72,10 @@ public:
     struct netif* netif(void);
     
     static void _setStatus(wl_status_t status);
+
+protected:
+	bool _mesh_mode = false;
+
 private:
 	struct mmwlan_sta_args sta_args = MMWLAN_STA_ARGS_INIT;
 };

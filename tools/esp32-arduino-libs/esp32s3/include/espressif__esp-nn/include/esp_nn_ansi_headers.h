@@ -1,0 +1,420 @@
+/*
+ * SPDX-FileCopyrightText: 2020-2026 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#pragma once
+
+/**
+ * @file        Header definitions to include for esp_nn reference functions
+ */
+
+#include "esp_nn_defs.h"
+/************************** Basic math functions ****************************/
+
+/**
+ * @brief       elementwise addition
+ *
+ * @note        inputs type: int8_t, output: int8_t
+ *              input offsets: although int32_t, they are contained in 8 bits [-128, 127]
+ *
+ *              shift values are expected to be <= 0
+ */
+void esp_nn_add_elementwise_s8_ansi(const int8_t *input1_data,
+                                    const int8_t *input2_data,
+                                    const int32_t input1_offset,
+                                    const int32_t input2_offset,
+                                    const int32_t input1_mult,
+                                    const int32_t input2_mult,
+                                    const int32_t input1_shift,
+                                    const int32_t input2_shift,
+                                    const int32_t left_shift,
+                                    int8_t *output,
+                                    const int32_t out_offset,
+                                    const int32_t out_mult,
+                                    const int32_t out_shift,
+                                    const int32_t activation_min,
+                                    const int32_t activation_max,
+                                    const int32_t size);
+/**
+ * @brief       elementwise multiplication
+ *
+ * @note        inputs type: int8_t, output: int8_t
+ *              input offsets: although int32_t, they are contained in 8 bits [-128, 127]
+ *
+ *              output shift is expected to be <= 0
+ */
+void esp_nn_mul_elementwise_s8_ansi(const int8_t *input1_data,
+                                    const int8_t *input2_data,
+                                    const int32_t input1_offset,
+                                    const int32_t input2_offset,
+                                    int8_t *output,
+                                    const int32_t out_offset,
+                                    const int32_t out_mult,
+                                    const int32_t out_shift,
+                                    const int32_t activation_min,
+                                    const int32_t activation_max,
+                                    const int32_t size);
+
+/**
+ * @brief       broadcast MUL for [H,W,C] * [1,1,C] pattern (SE-block)
+ *
+ * @note        input2_per_ch has `channels` elements, broadcast to all spatial positions.
+ *              Uses fast requantization (constant nudge).
+ */
+void esp_nn_mul_broadcast_channel_s8_ansi(const int8_t *input1,
+                                      const int8_t *input2_per_ch,
+                                      const int32_t input1_offset,
+                                      const int32_t input2_offset,
+                                      int8_t *output,
+                                      const int32_t output_offset,
+                                      const int32_t output_mult,
+                                      const int32_t output_shift,
+                                      const int32_t activation_min,
+                                      const int32_t activation_max,
+                                      const int32_t total_spatial,
+                                      const int32_t channels);
+
+
+/************************** Convolution functions *****************************/
+
+/**
+ * @brief       depthwise convolution per channel
+ *
+ * @note        inputs type: int8_t, output: int8_t
+ *              Version used in tflite is per channel.
+ *              This version follows the same footsprints.
+ *              Meaning, it has per out_channel shift and multiplier for
+ *              requantization
+ *
+ *              optimization notes: Though input_offset is int32 type,
+ *              offset values are contained in 8 bits [-128, 127]
+ */
+void esp_nn_depthwise_conv_s8_ansi(const data_dims_t *input_dims,
+                                   const int8_t *input_data,
+                                   const data_dims_t *filter_dims,
+                                   const int8_t *filter_data,
+                                   const int32_t *bias,
+                                   const data_dims_t *output_dims,
+                                   int8_t *out_data,
+                                   const dw_conv_params_t *conv_params,
+                                   const quant_data_t *quant_data);
+
+/**
+ * @brief       2d-convolution channelwise
+ *
+ * @note        operation: result += (input + offset) * filter
+ *
+ *              inputs type: int8_t, output: int8_t
+ *              input offsets: although int32_t, they are contained in 8 bits [-128, 127]
+ */
+void esp_nn_conv_s8_ansi(const data_dims_t *input_dims,
+                         const int8_t *input_data,
+                         const data_dims_t *filter_dims,
+                         const int8_t *filter_data,
+                         const int32_t *bias,
+                         const data_dims_t *output_dims,
+                         int8_t *out_data,
+                         const conv_params_t *conv_params,
+                         const quant_data_t *quant_data);
+
+int esp_nn_get_conv_scratch_size_ansi(const data_dims_t *input_dims,
+                                      const data_dims_t *filter_dims,
+                                      const data_dims_t *output_dims,
+                                      const conv_params_t *conv_params);
+void esp_nn_set_conv_scratch_buf_ansi(const void *buf);
+
+int esp_nn_get_depthwise_conv_scratch_size_ansi(const data_dims_t *input_dims,
+                                                const data_dims_t *filter_dims,
+                                                const data_dims_t *output_dims,
+                                                const dw_conv_params_t *conv_params);
+void esp_nn_set_depthwise_conv_scratch_buf_ansi(const void *buf);
+
+/************************** Activation functions *****************************/
+
+/**
+ * @brief       relu6
+ *
+ * @note        inout: int8_t
+ */
+void esp_nn_relu6_s8_ansi(int8_t *data, uint16_t size);
+
+/**
+ * @brief       hard_swish activation: y = x * relu6(x + 3) / 6
+ *
+ * @note        Quantized int8 fixed-point implementation
+ */
+void esp_nn_hard_swish_s8_ansi(const int8_t *input, int8_t *output,
+                                const int32_t size,
+                                const int16_t input_zero_point,
+                                const int16_t output_mult_fxp,
+                                const int16_t reluish_mult_fxp,
+                                const int32_t reluish_mult_exp,
+                                const int32_t output_mult_exp,
+                                const int16_t output_zero_point);
+
+/**
+ * @brief       mean reduction over spatial dims (H,W) for NHWC int8 tensor
+ *
+ * @note        Specialized for 4D [N,H,W,C] → [N,1,1,C] reduction.
+ *              Used by Squeeze-and-Excite in MobileNetV3.
+ */
+void esp_nn_mean_nhwc_s8_ansi(const int8_t *input, int8_t *output,
+                               const int32_t height, const int32_t width,
+                               const int32_t channels,
+                               const int32_t input_zero_point,
+                               const int32_t output_zero_point,
+                               const int32_t multiplier,
+                               const int32_t shift);
+
+/** Scratch for the mean: 0 for the reference implementation. */
+int32_t esp_nn_get_mean_scratch_size_ansi(const int32_t height, const int32_t width,
+                                          const int32_t channels);
+void esp_nn_set_mean_scratch_buf_ansi(void *buffer);
+
+/************************** Pooling functions *****************************/
+
+
+/**
+ * @brief       max_pool
+ *
+ * @note        inputs type: int8_t, output: int8_t
+ *              input offsets: although int32_t, they are contained in 8 bits [-128, 127]
+ */
+void esp_nn_max_pool_s8_ansi(const int8_t *input,
+                             const uint16_t input_wd,
+                             const uint16_t input_ht,
+                             int8_t *output,
+                             const uint16_t output_wd,
+                             const uint16_t output_ht,
+                             const uint16_t stride_wd,
+                             const uint16_t stride_ht,
+                             const uint16_t filter_wd,
+                             const uint16_t filter_ht,
+                             const uint16_t pad_wd,
+                             const uint16_t pad_ht,
+                             const int32_t activation_min,
+                             const int32_t activation_max,
+                             const uint16_t channels);
+
+/**
+ * @brief       avg_pool
+ *
+ * @note        inputs type: int8_t, output: int8_t
+ *              input offsets: although int32_t, they are contained in 8 bits [-128, 127]
+ */
+void esp_nn_avg_pool_s8_ansi(const int8_t *input,
+                             const uint16_t input_wd,
+                             const uint16_t input_ht,
+                             int8_t *output,
+                             const uint16_t output_wd,
+                             const uint16_t output_ht,
+                             const uint16_t stride_wd,
+                             const uint16_t stride_ht,
+                             const uint16_t filter_wd,
+                             const uint16_t filter_ht,
+                             const uint16_t pad_wd,
+                             const uint16_t pad_ht,
+                             const int32_t activation_min,
+                             const int32_t activation_max,
+                             const uint16_t channels);
+
+
+/************************** Fully connected functions ***********************/
+
+/**
+ * @brief       fully connected
+ *
+ * @note        inputs type: int8_t, output: int8_t
+ *              input offsets: although int32_t, they are contained in 8 bits [-128, 127]
+ */
+void esp_nn_fully_connected_s8_ansi(const int8_t *input_data,
+                                    const int32_t input_offset,
+                                    const uint16_t row_len,
+                                    const int8_t *filter_data,
+                                    const int32_t filter_offset,
+                                    const int32_t *bias,
+                                    int8_t *out_data,
+                                    const uint16_t out_channels,
+                                    const int32_t out_offset,
+                                    const int32_t out_shift,
+                                    const int32_t out_mult,
+                                    const int32_t activation_min,
+                                    const int32_t activation_max);
+
+/**
+ * @brief       fully connected
+ *
+ * @note        inputs type: int8_t, output: int8_t
+ *              input offsets: although int32_t, they are contained in 8 bits [-128, 127]
+ *              out_mult, out_shift: int32_t* containing per-channel data
+ */
+void esp_nn_fully_connected_per_ch_s8_ansi(const int8_t *input_data,
+                                    const int32_t input_offset,
+                                    const uint16_t row_len,
+                                    const int8_t *filter_data,
+                                    const int32_t filter_offset,
+                                    const int32_t *bias,
+                                    int8_t *out_data,
+                                    const uint16_t out_channels,
+                                    const int32_t out_offset,
+                                    const int32_t* out_shift,
+                                    const int32_t* out_mult,
+                                    const int32_t activation_min,
+                                    const int32_t activation_max);
+
+void esp_nn_fully_connected_per_ch_s8_batch_ansi(const int8_t *input_data,
+                                    const int32_t input_offset,
+                                    const uint16_t row_len,
+                                    const int8_t *filter_data,
+                                    const int32_t filter_offset,
+                                    const int32_t *bias,
+                                    int8_t *out_data,
+                                    const uint16_t out_channels,
+                                    const int32_t out_offset,
+                                    const int32_t* out_shift,
+                                    const int32_t* out_mult,
+                                    const int32_t activation_min,
+                                    const int32_t activation_max,
+                                    const int32_t batches);
+
+/**
+ * @brief   Get scratch buffer size needed by softmax function
+ *
+ * @param   width
+ * @param   height
+ * @return  size in bytes
+ *
+ * @note    buffer must be 4 byte aligned
+ */
+int32_t esp_nn_get_softmax_scratch_size_ansi(const int32_t width, const int32_t height);
+
+/* ANSI C function to be hooked up when optimised version needed */
+int32_t esp_nn_get_softmax_scratch_size_opt(const int32_t width, const int32_t height);
+
+/**
+ * @brief   Set scratch buffer to be used by softmax function
+ *
+ * @param   buffer  this can be NULL if one needs to unset it
+ *                  must be aligned to 4 bytes
+ */
+void esp_nn_set_softmax_scratch_buf_ansi(void *buffer);
+
+/**
+ * @brief       reference softmax function
+ *
+ * @note        inputs type: int8_t, output: int8_t
+ */
+void esp_nn_softmax_s8_ansi(const int8_t *input_data,
+                            const int32_t height,
+                            const int32_t width,
+                            const int32_t mult,
+                            const int32_t shift,
+                            const int32_t diff_min,
+                            int8_t *output_data);
+
+
+//////////////////////////// Generic optimisations /////////////////////////////
+
+/************************** Convolution functions *****************************/
+
+/**
+ * @brief       2d-convolution channelwise optimized version
+ *
+ * @note        operation: result += (input + offset) * filter
+ *
+ *              inputs type: int8_t, output: int8_t
+ *              input offsets: although int32_t, they are contained in 8 bits [-128, 127]
+ */
+void esp_nn_conv_s8_opt(const data_dims_t *input_dims,
+                        const int8_t *input_data,
+                        const data_dims_t *filter_dims,
+                        const int8_t *filter_data,
+                        const int32_t *bias,
+                        const data_dims_t *output_dims,
+                        int8_t *out_data,
+                        const conv_params_t *conv_params,
+                        const quant_data_t *quant_data);
+
+/**
+ * @brief       depthwise convolution per channel optimized version
+ *
+ * @note        inputs type: int8_t, output: int8_t
+ *              Version used in tflite is per channel.
+ *              This version follows the same footsprints.
+ *              Meaning, it has per out_channel shift and multiplier for
+ *              requantization
+ *
+ *              optimization notes: Though input_offset is int32 type,
+ *              offset values are contained in 8 bits [-128, 127]
+ */
+void esp_nn_depthwise_conv_s8_opt(const data_dims_t *input_dims,
+                                  const int8_t *input_data,
+                                  const data_dims_t *filter_dims,
+                                  const int8_t *filter_data,
+                                  const int32_t *bias,
+                                  const data_dims_t *output_dims,
+                                  int8_t *out_data,
+                                  const dw_conv_params_t *conv_params,
+                                  const quant_data_t *quant_data);
+
+int esp_nn_get_conv_scratch_size_opt(const data_dims_t *input_dims,
+                                     const data_dims_t *filter_dims,
+                                     const data_dims_t *output_dims,
+                                     const conv_params_t *conv_params);
+void esp_nn_set_conv_scratch_buf_opt(const void *buf);
+
+int esp_nn_get_depthwise_conv_scratch_size_opt(const data_dims_t *input_dims,
+                                               const data_dims_t *filter_dims,
+                                               const data_dims_t *output_dims,
+                                               const dw_conv_params_t *conv_params);
+void esp_nn_set_depthwise_conv_scratch_buf_opt(const void *buf);
+
+/* ANSI C function to be hooked up when optimised version needed */
+void esp_nn_set_softmax_scratch_buf_opt(void *buffer);
+
+/**
+ * @brief       optimised version of softmax function
+ *
+ * @note        the function uses extra buffer (4 * width bytes)
+ *              hence, scratch buffers must be set before calling this.
+ */
+void esp_nn_softmax_s8_opt(const int8_t *input_data,
+                           const int32_t height,
+                           const int32_t width,
+                           const int32_t mult,
+                           const int32_t shift,
+                           const int32_t diff_min,
+                           int8_t *output_data);
+
+/**
+ * @brief       Get scratch buffer size for int8 logistic (sigmoid).
+ * @return      256 (size of LUT in bytes)
+ */
+int32_t esp_nn_get_logistic_s8_scratch_size_ansi(void);
+
+/**
+ * @brief       Prepare LUT for int8 logistic (sigmoid).
+ *              Call once during model preparation after scratch is allocated.
+ *
+ * @param       scratch_buf         Scratch buffer (256 bytes, from get_scratch_size)
+ * @param       input_zero_point    Input quantization zero point
+ * @param       input_scale         Input quantization scale (float)
+ *
+ * @note        Output quantization is fixed: scale=1/256, zero_point=-128.
+ */
+void esp_nn_logistic_s8_prepare_ansi(int8_t *scratch_buf,
+                                      int32_t input_zero_point,
+                                      float input_scale);
+
+/**
+ * @brief       Apply int8 logistic (sigmoid) using precomputed LUT.
+ *
+ * @param       input       Input int8 data
+ * @param       output      Output int8 data
+ * @param       size        Number of elements
+ * @param       scratch_buf 256-byte LUT from esp_nn_logistic_s8_prepare()
+ */
+void esp_nn_logistic_s8_ansi(const int8_t *input, int8_t *output,
+                              int32_t size, const int8_t *scratch_buf);

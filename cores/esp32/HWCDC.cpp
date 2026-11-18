@@ -14,7 +14,6 @@
 #include "USB.h"
 #if SOC_USB_SERIAL_JTAG_SUPPORTED
 
-#include "Arduino.h"  // defines ARDUINO_SERIAL_EVENT_TASK_STACK_SIZE and ARDUINO_SERIAL_EVENT_TASK_PRIORITY
 #include "esp32-hal.h"
 #include "esp32-hal-periman.h"
 #include "HWCDC.h"
@@ -33,8 +32,6 @@
 
 ESP_EVENT_DEFINE_BASE(ARDUINO_HW_CDC_EVENTS);
 
-#define USB_INT_PHY0_DM_GPIO_NUM 19
-#define USB_INT_PHY0_DP_GPIO_NUM 20
 static RingbufHandle_t tx_ring_buf = NULL;
 static QueueHandle_t rx_queue = NULL;
 static uint8_t rx_data_buf[64] = {0};
@@ -63,11 +60,7 @@ static esp_err_t
   arduino_hw_cdc_event_handler_register_with(esp_event_base_t event_base, int32_t event_id, esp_event_handler_t event_handler, void *event_handler_arg) {
   if (!arduino_hw_cdc_event_loop_handle) {
     esp_event_loop_args_t event_task_args = {
-      .queue_size = 5,
-      .task_name = "arduino_hw_cdc_events",
-      .task_priority = ARDUINO_SERIAL_EVENT_TASK_PRIORITY,
-      .task_stack_size = ARDUINO_SERIAL_EVENT_TASK_STACK_SIZE,
-      .task_core_id = tskNO_AFFINITY
+      .queue_size = 5, .task_name = "arduino_hw_cdc_events", .task_priority = 5, .task_stack_size = 2048, .task_core_id = tskNO_AFFINITY
     };
     if (esp_event_loop_create(&event_task_args, &arduino_hw_cdc_event_loop_handle) != ESP_OK) {
       log_e("esp_event_loop_create failed");
@@ -260,6 +253,8 @@ static void ARDUINO_ISR_ATTR cdc0_write_char(char c) {
 }
 
 HWCDC::HWCDC() {
+  perimanSetBusDeinit(ESP32_BUS_TYPE_USB_DM, HWCDC::deinit);
+  perimanSetBusDeinit(ESP32_BUS_TYPE_USB_DP, HWCDC::deinit);
   // SOF in ISR causes problems for uploading firmware
   //  lastSOF_ms = 0;
   //  SOF_TIMEOUT = 5;
@@ -291,14 +286,14 @@ bool HWCDC::deinit(void *busptr) {
   running = true;
   // Setting USB D+ D- pins
   bool retCode = true;
-  retCode &= perimanClearPinBus(USB_INT_PHY0_DM_GPIO_NUM);
-  retCode &= perimanClearPinBus(USB_INT_PHY0_DP_GPIO_NUM);
+  retCode &= perimanClearPinBus(USB_DM_GPIO_NUM);
+  retCode &= perimanClearPinBus(USB_DP_GPIO_NUM);
   if (retCode) {
     // Force the host to re-enumerate (BUS_RESET)
-    pinMode(USB_INT_PHY0_DM_GPIO_NUM, OUTPUT_OPEN_DRAIN);
-    pinMode(USB_INT_PHY0_DP_GPIO_NUM, OUTPUT_OPEN_DRAIN);
-    digitalWrite(USB_INT_PHY0_DM_GPIO_NUM, LOW);
-    digitalWrite(USB_INT_PHY0_DP_GPIO_NUM, LOW);
+    pinMode(USB_DM_GPIO_NUM, OUTPUT_OPEN_DRAIN);
+    pinMode(USB_DP_GPIO_NUM, OUTPUT_OPEN_DRAIN);
+    digitalWrite(USB_DM_GPIO_NUM, LOW);
+    digitalWrite(USB_DP_GPIO_NUM, LOW);
   }
   // release the flag
   running = false;
@@ -328,20 +323,15 @@ void HWCDC::begin(unsigned long baud) {
   // delay(10);  // USB Host has to enumerate it again
 
   // Peripheral Manager setting for USB D+ D- pins
-  uint8_t pin = USB_INT_PHY0_DM_GPIO_NUM;
-  if (perimanGetBusDeinit(ESP32_BUS_TYPE_USB_DM) == NULL) {
-    perimanSetBusDeinit(ESP32_BUS_TYPE_USB_DM, HWCDC::deinit);
-  }
+  uint8_t pin = USB_DM_GPIO_NUM;
   if (!perimanSetPinBus(pin, ESP32_BUS_TYPE_USB_DM, (void *)this, -1, -1)) {
     goto err;
   }
-  pin = USB_INT_PHY0_DP_GPIO_NUM;
-  if (perimanGetBusDeinit(ESP32_BUS_TYPE_USB_DP) == NULL) {
-    perimanSetBusDeinit(ESP32_BUS_TYPE_USB_DP, HWCDC::deinit);
-  }
+  pin = USB_DP_GPIO_NUM;
   if (!perimanSetPinBus(pin, ESP32_BUS_TYPE_USB_DP, (void *)this, -1, -1)) {
     goto err;
   }
+
   // Configure PHY
   // USB_Serial_JTAG use internal PHY
   USB_SERIAL_JTAG.conf0.phy_sel = 0;
@@ -613,7 +603,6 @@ void HWCDC::setDebugOutput(bool en) {
   } else {
     ets_install_putc2(NULL);
   }
-  ets_install_putc1(NULL);  // closes UART log output
 }
 
 #if ARDUINO_USB_MODE && ARDUINO_USB_CDC_ON_BOOT  // Hardware JTAG CDC selected

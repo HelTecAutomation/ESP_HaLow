@@ -1,5 +1,4 @@
 .git
-tools/esp32-arduino-libs
 tools/esptool
 tools/mklittlefs
 tools/mkspiffs

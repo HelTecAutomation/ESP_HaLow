@@ -18,7 +18,7 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "Halow.h"
+#include "HaLow.h"
 #include "HalowGeneric.h"
 #include "HalowScan.h"
 
@@ -102,6 +102,8 @@ typedef struct halow_scan_result
 {
     /** RSSI of the received frame. */
     int16_t rssi;
+    /** Background noise measured on the channel when the frame was received. */
+    int8_t noise_dbm;
     /** Pointer to the BSSID field within the Probe Response frame. */
     uint8_t bssid[6];
     /** Pointer to the SSID within the SSID IE of the Probe Response frame. */
@@ -301,6 +303,7 @@ static void scan_rx_callback(const struct mmwlan_scan_result *result, void *arg)
     halow_ap_record[num_scan_results].op_bw_mhz=result->op_bw_mhz;
     halow_ap_record[num_scan_results].beacon_interval=result->beacon_interval;
     halow_ap_record[num_scan_results].rssi=result->rssi;
+    halow_ap_record[num_scan_results].noise_dbm=result->noise_dbm;
     halow_ap_record[num_scan_results].capability_info=result->capability_info;
 
     memcpy(&(halow_ap_record[num_scan_results].bssid),result->bssid,6);
@@ -527,6 +530,21 @@ int32_t HalowScanClass::RSSI(uint8_t i)
     if(i<HalowScanClass::_scanCount)
     {
       return halow_ap_record[i].rssi;
+    }
+    return 0;
+}
+
+
+/**
+ * Return the background noise of the scanned network
+ * @param i specify from which network item want to get the information
+ * @return noise in dBm
+ */
+int8_t HalowScanClass::noise(uint8_t i)
+{
+    if(i<HalowScanClass::_scanCount)
+    {
+      return halow_ap_record[i].noise_dbm;
     }
     return 0;
 }

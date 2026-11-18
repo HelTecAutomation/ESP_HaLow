@@ -26,7 +26,7 @@ uint32_t last_send_udp_time=0;
 #define TEST_UDP_MESSAGE "cycle udp message\r\n"
 void HaLowEvent(HaLowEvent_t event)
 {
-    Serial.printf("[HaLow-event] event: %d\r\n", event);
+    Serial.printf("[HaLow-event] event: %d - %s\r\n", event, HaLow.eventName(event));
 
     switch (event) {
         case ARDUINO_HALOW_EVENT_SCAN_DONE: 

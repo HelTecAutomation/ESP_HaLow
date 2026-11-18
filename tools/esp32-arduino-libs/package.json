@@ -1,0 +1,16 @@
+{
+  "name": "framework-arduinoespressif32-libs",
+  "description": "Precompiled libraries for Arduino Wiring-based Framework for the Espressif ESP32 series of SoCs",
+  "keywords": [
+    "framework",
+    "arduino",
+    "espressif",
+    "esp32"
+  ],
+  "license": "LGPL-2.1-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/espressif/esp32-arduino-lib-builder"
+  },
+  "version": "5.1.0+sha.4b1ae715b8"
+}

@@ -19,7 +19,7 @@ bool halowconnected=false;
 
 void HaLowEvent(HaLowEvent_t event)
 {
-    Serial.printf("[HaLow-event] event: %d\r\n", event);
+    Serial.printf("[HaLow-event] event: %d - %s\r\n", event, HaLow.eventName(event));
 
     switch (event) {
         case ARDUINO_HALOW_EVENT_SCAN_DONE: 

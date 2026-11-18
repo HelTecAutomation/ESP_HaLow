@@ -1,13 +1,14 @@
 /*
  * Important Notes
- * 1. The ESP32 HaLow AP does not come with an embedded DHCP server.
- * 2. Every HaLow STA client associated with this HaLow AP must be assigned a static IP address from the same subnet to establish communication.
- * 3. Relevant reference sample projects:
- *    - HalowClientStaticIP
- *    - HalowSTA_STATIC_to_WiFiAP
+ * 1. This example runs a HaLow AP and connects the ESP32 to a WiFi AP as STA.
+ * 2. NAPT is enabled after the WiFi uplink obtains an IP, forwarding traffic
+ *    between the HaLow AP subnet and the WiFi uplink.
+ * 3. ENABLE_DHCP_SERVER = 1 starts the embedded DHCP server for HaLow STAs.
+ *    Set it to 0 if the HaLow STAs use static IP addresses.
  */
 #include <HaLow.h>
 #include "WiFi.h"
+#include "lwip/tcpip.h"
 
 // Please read REGION_SW_CHANNEL_REF. h to obtain the relationship between region, bandwidth, and channel
 #define HALOW_REGION     "US"
@@ -21,8 +22,38 @@ IPAddress subnet(255, 255, 255, 0);
 IPAddress primaryDNS(8, 8, 8, 8);
 IPAddress secondaryDNS(8, 8, 4, 4);
 
-const char* wifi_ssid = "HT-H7981-9C9C";
+const char* wifi_ssid = "HT-HD02-7F82";
 const char* wifi_password = "heltec.org";
+
+// Set to 0 if HaLow STAs use static IP addresses.
+#ifndef ENABLE_DHCP_SERVER
+#define ENABLE_DHCP_SERVER 1
+#endif
+
+// DHCP lease range for HaLow STAs.
+IPAddress dhcp_lease_start(192, 168, 1, 100);
+IPAddress dhcp_lease_end(192, 168, 1, 150);
+
+#if ENABLE_DHCP_SERVER
+static void onDhcpLease(IPAddress client_ip, const uint8_t client_mac[6])
+{
+  Serial.printf("DHCP lease %s -> %02X:%02X:%02X:%02X:%02X:%02X\n",
+                client_ip.toString().c_str(),
+                client_mac[0], client_mac[1], client_mac[2],
+                client_mac[3], client_mac[4], client_mac[5]);
+}
+#endif
+
+/*
+ * NAPT must be enabled from the lwIP TCP/IP thread, after the WiFi uplink
+ * has an IP address.
+ */
+static void enableHalowNapt(void *arg)
+{
+  (void)arg;
+  ip_napt_enable((uint32_t)local_IP, 1);
+  Serial.println("NAPT enabled on HaLow AP");
+}
 
 // WARNING: This function is called from a separate FreeRTOS task (thread)!
 void WiFiEvent(WiFiEvent_t event) {
@@ -68,6 +99,10 @@ void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info) {
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(IPAddress(info.got_ip.ip_info.ip.addr));
+
+  if (tcpip_callback(enableHalowNapt, NULL) != ERR_OK) {
+    Serial.println("Failed to schedule NAPT enable");
+  }
 }
 
 
@@ -104,7 +139,18 @@ void setup() {
   Serial.println(HaLow.dnsIP());
   Serial.print("Mac Address: ");
   Serial.println(HaLow.macAddress());
-  
+
+#if ENABLE_DHCP_SERVER
+  HaLow.setDhcpLeaseCallback(onDhcpLease);
+  if (HaLow.enableDhcpServer(dhcp_lease_start, dhcp_lease_end)) {
+    Serial.println("DHCP server started");
+  } else {
+    Serial.println("DHCP server start failed");
+  }
+#else
+  Serial.println("DHCP server disabled; HaLow STAs need static IP addresses.");
+#endif
+
   WiFi.onEvent(WiFiEvent);
   WiFi.onEvent(WiFiGotIP, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFiEventId_t eventID = WiFi.onEvent(
@@ -118,11 +164,10 @@ void setup() {
 
   Serial.println();
   Serial.println("Wait for WiFi... ");
-
-  ip_napt_enable(local_IP, 1);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   delay(1000);
 }
+

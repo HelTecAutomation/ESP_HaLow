@@ -111,7 +111,7 @@ enum mmwlan_vif
 };
 
 /** Enumeration of supported security types. */
-typedef enum mmwlan_security_type
+enum mmwlan_security_type
 {
     /** Open (no security) */
     MMWLAN_OPEN,
@@ -119,8 +119,7 @@ typedef enum mmwlan_security_type
     MMWLAN_OWE,
     /** Simultaneous Authentication of Equals (SAE) */
     MMWLAN_SAE,
-    MMWLAN_OTHER
-}mmwlan_security_type_t;
+};
 
 /** Enumeration of Protected Management Frame (PMF) modes (802.11w). */
 enum mmwlan_pmf_mode
@@ -608,7 +607,7 @@ struct mmwlan_boot_args
     /** Note this field should not be used and will be removed in future. */
     uint8_t reserved;
 };
-extern enum mmwlan_vif halow_mode;
+
 /**
  * Initializer for @ref mmwlan_boot_args.
  *
@@ -681,7 +680,7 @@ enum mmwlan_status mmwlan_get_vif_mac_addr(enum mmwlan_vif vif, uint8_t *mac_add
  */
 static inline enum mmwlan_status mmwlan_get_mac_addr(uint8_t *mac_addr)
 {
-    return mmwlan_get_vif_mac_addr(halow_mode, mac_addr);
+    return mmwlan_get_vif_mac_addr(MMWLAN_VIF_STA, mac_addr);
 }
 
 /** @} */
@@ -2447,6 +2446,47 @@ struct mmwlan_ap_args
 enum mmwlan_status mmwlan_ap_enable(const struct mmwlan_ap_args *args);
 
 /**
+ * Enable 802.11s mesh mode.
+ *
+ * This will power on the transceiver and start a mesh interface. The fields of
+ * @p args are interpreted in the same way as for @ref mmwlan_ap_enable, with
+ * the SSID used as the mesh ID.
+ *
+ * @warning Channel list must be set before enabling mesh mode.
+ * @warning This requires a firmware build with 802.11s mesh support.
+ *
+ * @param args              Arguments (e.g., mesh ID, channel, etc.).
+ *
+ * @return @ref MMWLAN_SUCCESS on success, else an appropriate error code.
+ */
+enum mmwlan_status mmwlan_mesh_enable(const struct mmwlan_ap_args *args);
+
+/** Maximum number of entries in the optional mesh peer whitelist. */
+#define MMWLAN_MESH_PEER_WHITELIST_MAX (4)
+
+/**
+ * Configure an optional mesh peer whitelist.
+ *
+ * When @p count is greater than zero, only peers whose transmitter address is
+ * listed in @p peers may complete mesh peering. Mesh management frames and
+ * peer candidates from every other address are discarded. This only applies
+ * to the mesh interface and does not restrict AP or STA mode.
+ *
+ * Call this before @ref mmwlan_mesh_enable(). Pass @p count = 0 to disable.
+ *
+ * @note This is intended for controlled topology tests. It requires a
+ *       source-built morselib; pre-compiled libmorse does not contain it.
+ *
+ * @param peers  Array of @p count unicast MAC addresses.
+ * @param count  Number of addresses, at most @ref MMWLAN_MESH_PEER_WHITELIST_MAX.
+ *
+ * @return @ref MMWLAN_SUCCESS on success, @ref MMWLAN_INVALID_ARGUMENT for an
+ *         invalid list, or @ref MMWLAN_UNAVAILABLE if mesh support is not built in.
+ */
+enum mmwlan_status mmwlan_mesh_set_peer_whitelist(
+    const uint8_t (*peers)[MMWLAN_MAC_ADDR_LEN], size_t count);
+
+/**
  * Disable AP mode.
  *
  * This will disconnect any stations from the AP. It will also shut down the transceiver if nothing
@@ -3110,6 +3150,74 @@ enum mmwlan_status mmwlan_get_umac_stats(struct mmwlan_stats_umac_data *stats_de
  * @return @ref MMWLAN_SUCCESS
  */
 enum mmwlan_status mmwlan_clear_umac_stats(void);
+
+/** Mesh forwarding path statistics used to localize per-hop loss. */
+struct mmwlan_mesh_fwd_stats
+{
+    uint32_t rx_unicast;
+    uint32_t rx_broadcast;
+    uint32_t forwarded_unicast;
+    uint32_t forwarded_broadcast;
+    uint32_t drop_no_path;
+    uint32_t drop_ttl;
+    uint32_t drop_llc;
+    uint32_t drop_alloc;
+    uint32_t drop_broadcast_dup;
+    uint32_t drop_dup_ucast;
+    uint32_t drop_amsdu;
+    uint32_t decrypt_hw;
+    uint32_t decrypt_sw;
+    uint32_t decrypt_sw_fail;
+    uint32_t tx_ok;
+    uint32_t tx_fail;
+    uint32_t preq_tx;
+    uint32_t preq_rx;
+    uint32_t prep_tx;
+    uint32_t prep_rx;
+    uint32_t path_install;
+};
+
+enum mmwlan_status mmwlan_get_mesh_fwd_stats(struct mmwlan_mesh_fwd_stats *stats);
+
+enum mmwlan_status mmwlan_clear_mesh_fwd_stats(void);
+
+#define MMWLAN_MESH_LINK_STATS_MAX 8
+
+/** Per-peer link counters (RX side of this node and TX results reported by the driver). */
+struct mmwlan_mesh_link_stats
+{
+    uint8_t peer[6];
+    uint32_t rx_frames;
+    uint32_t rx_bytes;
+    int16_t rssi_min;
+    int16_t rssi_avg;
+    int16_t rssi_max;
+    uint32_t tx_frames;
+    uint32_t tx_ok;
+    uint32_t tx_fail;
+    uint32_t tx_unsent;
+    uint32_t tx_attempts;
+    uint32_t tx_small_frames;
+    uint32_t tx_small_attempts;
+    uint32_t tx_small_fail;
+    uint32_t tx_large_frames;
+    uint32_t tx_large_attempts;
+    uint32_t tx_large_fail;
+    uint32_t tx_tid_frames[8];
+    uint32_t tx_tid_attempts[8];
+    uint32_t tx_tid_fail[8];
+    uint32_t reorder_total;
+    uint32_t reorder_overflow;
+    uint32_t reorder_timedout;
+    uint32_t reorder_outdated;
+    uint32_t reorder_retransmit;
+};
+
+size_t mmwlan_get_mesh_link_stats(struct mmwlan_mesh_link_stats *stats, size_t max);
+
+void mmwlan_mesh_trigger_preq(const uint8_t dest[6]);
+
+void mmwlan_clear_mesh_link_stats(void);
 
 /** @} */
 

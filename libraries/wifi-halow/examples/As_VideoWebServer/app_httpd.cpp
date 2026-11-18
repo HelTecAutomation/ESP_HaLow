@@ -256,25 +256,23 @@ static esp_err_t index_handler(httpd_req_t *req)
 
 static esp_err_t button_handler(httpd_req_t *req)
 {
-  esp_err_t err;
-  camera_fb_t * fb = NULL;
-  fb = esp_camera_fb_get();
+  camera_fb_t *fb = esp_camera_fb_get();
   if (!fb)
   {
       ESP_LOGE(TAG, "Camera capture failed");
-      err = ESP_FAIL;
+      return httpd_resp_send_500(req);
   }
-  else
-  {
-    String video = "/video";
-    int jpgCount=readFileNum(SD, video.c_str());
-    String path = video + "/" + String(jpgCount) +".jpg";
-    writejpg(SD, path.c_str(), fb->buf, fb->len);
-    esp_camera_fb_return(fb);
-    fb = NULL;
-    err=ESP_OK;
-  }
-  return err;
+
+  String video = "/video";
+  int jpgCount = readFileNum(SD, video.c_str());
+  String path = video + "/" + String(jpgCount) + ".jpg";
+  writejpg(SD, path.c_str(), fb->buf, fb->len);
+  esp_camera_fb_return(fb);
+
+  char response[96];
+  snprintf(response, sizeof(response), "Saved: %s", path.c_str());
+  httpd_resp_set_type(req, "text/plain");
+  return httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
 }
 
 void startCameraServer()

@@ -29,11 +29,11 @@ extern "C" {
 #include "esp32-hal.h"
 
 typedef enum {
-    ADC_0db,
-    ADC_2_5db,
-    ADC_6db,
-    ADC_11db,
-    ADC_ATTENDB_MAX
+  ADC_0db,
+  ADC_2_5db,
+  ADC_6db,
+  ADC_11db,
+  ADC_ATTENDB_MAX
 } adc_attenuation_t;
 
 /*
@@ -82,21 +82,21 @@ void analogSetWidth(uint8_t bits);
  * */
 
 typedef struct {
-    uint8_t pin;           /*!<ADC pin */
-    uint8_t channel;       /*!<ADC channel */
-    int avg_read_raw;      /*!<ADC average raw data */
-    int avg_read_mvolts;   /*!<ADC average voltage in mV */
-} adc_continuos_data_t;
+  uint8_t pin;         /*!<ADC pin */
+  uint8_t channel;     /*!<ADC channel */
+  int avg_read_raw;    /*!<ADC average raw data */
+  int avg_read_mvolts; /*!<ADC average voltage in mV */
+} adc_continuous_data_t;
 
 /*
  * Setup ADC continuous peripheral
  * */
-bool analogContinuous(uint8_t pins[], size_t pins_count, uint32_t conversions_per_pin, uint32_t sampling_freq_hz, void (*userFunc)(void));
+bool analogContinuous(const uint8_t pins[], size_t pins_count, uint32_t conversions_per_pin, uint32_t sampling_freq_hz, void (*userFunc)(void));
 
 /*
  * Read ADC continuous conversion data
  * */
-bool analogContinuousRead(adc_continuos_data_t ** buffer, uint32_t timeout_ms);
+bool analogContinuousRead(adc_continuous_data_t **buffer, uint32_t timeout_ms);
 
 /*
  * Start ADC continuous conversions
@@ -125,7 +125,6 @@ void analogContinuousSetAtten(adc_attenuation_t attenuation);
  * Range is 9 - 12
  * */
 void analogContinuousSetWidth(uint8_t bits);
-
 
 #ifdef __cplusplus
 }

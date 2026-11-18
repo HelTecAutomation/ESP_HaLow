@@ -24,6 +24,7 @@ menu.PinNumbers=Pin Numbering
 menu.Revision=Board Revision
 menu.HC01_Voltage=FEM Voltage
 menu.NetworkLogLevel=NetworkLogLevel
+menu.HaLow_AU=AU Region
 ##############################################################
 ### DO NOT PUT BOARDS ABOVE THE OFFICIAL ESPRESSIF BOARDS! ###
 ##############################################################
@@ -151,13 +152,22 @@ HT-HC32.menu.DebugLevel.verbose.build.code_debug=5
 
 
 HT-HC32.menu.PSRAM.opi=OPI PSRAM
-HT-HC32.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
+HT-HC32.menu.PSRAM.opi.build.psram_flag=-DBOARD_HAS_PSRAM
 HT-HC32.menu.PSRAM.opi.build.psram_type=opi
 
 HT-HC32.menu.EraseFlash.none=Disabled
 HT-HC32.menu.EraseFlash.none.upload.erase_cmd=
 HT-HC32.menu.EraseFlash.all=Enabled
 HT-HC32.menu.EraseFlash.all.upload.erase_cmd=-e
+
+HT-HC32.menu.HaLow_AU.AU_2020=AU_2020
+HT-HC32.menu.HaLow_AU.AU_2020.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_2020
+HT-HC32.menu.HaLow_AU.AU_2024=AU_2024
+HT-HC32.menu.HaLow_AU.AU_2024.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_2024
+HT-HC32.menu.HaLow_AU.AU_revmf=AU_revmf
+HT-HC32.menu.HaLow_AU.AU_revmf.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_revmf
+
+HT-HC32.build.defines={build.psram_flag} {build.au_flag}
 
 ##############################################################
 ##############################################################
@@ -286,7 +296,7 @@ HT-HC33.menu.DebugLevel.verbose=Verbose
 HT-HC33.menu.DebugLevel.verbose.build.code_debug=5
 
 HT-HC33.menu.PSRAM.opi=OPI PSRAM
-HT-HC33.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
+HT-HC33.menu.PSRAM.opi.build.psram_flag=-DBOARD_HAS_PSRAM
 HT-HC33.menu.PSRAM.opi.build.psram_type=opi
 
 HT-HC33.menu.EraseFlash.none=Disabled
@@ -294,6 +304,14 @@ HT-HC33.menu.EraseFlash.none.upload.erase_cmd=
 HT-HC33.menu.EraseFlash.all=Enabled
 HT-HC33.menu.EraseFlash.all.upload.erase_cmd=-e
 
+HT-HC33.menu.HaLow_AU.AU_2020=AU_2020
+HT-HC33.menu.HaLow_AU.AU_2020.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_2020
+HT-HC33.menu.HaLow_AU.AU_2024=AU_2024
+HT-HC33.menu.HaLow_AU.AU_2024.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_2024
+HT-HC33.menu.HaLow_AU.AU_revmf=AU_revmf
+HT-HC33.menu.HaLow_AU.AU_revmf.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_revmf
+
+HT-HC33.build.defines={build.psram_flag} {build.au_flag}
 ##############################################################
 
 ##############################################################
@@ -423,13 +441,22 @@ HT-HC33-V2.menu.DebugLevel.verbose=Verbose
 HT-HC33-V2.menu.DebugLevel.verbose.build.code_debug=5
 
 HT-HC33-V2.menu.PSRAM.opi=OPI PSRAM
-HT-HC33-V2.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
+HT-HC33-V2.menu.PSRAM.opi.build.psram_flag=-DBOARD_HAS_PSRAM
 HT-HC33-V2.menu.PSRAM.opi.build.psram_type=opi
 
 HT-HC33-V2.menu.EraseFlash.none=Disabled
 HT-HC33-V2.menu.EraseFlash.none.upload.erase_cmd=
 HT-HC33-V2.menu.EraseFlash.all=Enabled
 HT-HC33-V2.menu.EraseFlash.all.upload.erase_cmd=-e
+
+HT-HC33-V2.menu.HaLow_AU.AU_2020=AU_2020
+HT-HC33-V2.menu.HaLow_AU.AU_2020.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_2020
+HT-HC33-V2.menu.HaLow_AU.AU_2024=AU_2024
+HT-HC33-V2.menu.HaLow_AU.AU_2024.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_2024
+HT-HC33-V2.menu.HaLow_AU.AU_revmf=AU_revmf
+HT-HC33-V2.menu.HaLow_AU.AU_revmf.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_revmf
+
+HT-HC33-V2.build.defines={build.psram_flag} {build.au_flag}
 ##############################################################
 
 
@@ -559,13 +586,22 @@ HT-RC3268.menu.DebugLevel.verbose=Verbose
 HT-RC3268.menu.DebugLevel.verbose.build.code_debug=5
 
 HT-RC3268.menu.PSRAM.opi=OPI PSRAM
-HT-RC3268.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
+HT-RC3268.menu.PSRAM.opi.build.psram_flag=-DBOARD_HAS_PSRAM
 HT-RC3268.menu.PSRAM.opi.build.psram_type=opi
 
 HT-RC3268.menu.EraseFlash.none=Disabled
 HT-RC3268.menu.EraseFlash.none.upload.erase_cmd=
 HT-RC3268.menu.EraseFlash.all=Enabled
 HT-RC3268.menu.EraseFlash.all.upload.erase_cmd=-e
+
+HT-RC3268.menu.HaLow_AU.AU_2020=AU_2020
+HT-RC3268.menu.HaLow_AU.AU_2020.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_2020
+HT-RC3268.menu.HaLow_AU.AU_2024=AU_2024
+HT-RC3268.menu.HaLow_AU.AU_2024.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_2024
+HT-RC3268.menu.HaLow_AU.AU_revmf=AU_revmf
+HT-RC3268.menu.HaLow_AU.AU_revmf.build.au_flag=-DMM_REGDB_DEFAULT_S1G_CHANNEL_LIST_AU=s1g_channel_list_au_80211_revmf
+
+HT-RC3268.build.defines={build.psram_flag} {build.au_flag}
 
 
 ##############################################################

@@ -138,6 +138,7 @@ wl_status_t HalowSTAClass::begin(const char* ssid, const char *passphrase, mmwla
 	enum mmwlan_status _status;
 	struct mmwlan_version version;
   halow_mode=MMWLAN_VIF_STA;
+  _mesh_mode = false;
 
     /* Load SSID */
     (void)mmosal_safer_strcpy((char*)sta_args.ssid, ssid, sizeof(sta_args.ssid));
@@ -220,9 +221,13 @@ bool HalowSTAClass::isConnected()
  */
 IPAddress HalowSTAClass::localIP()
 {
+  struct mmipal_ip_config config;
+
   if (status() != WL_CONNECTED)
     return IPAddress();
-  return IPAddress(mmipal_data.lwip_mmnetif.ip_addr.u_addr.ip4.addr);
+  if (mmipal_get_ip_config(&config) != MMIPAL_SUCCESS)
+    return IPAddress();
+  return IPAddress(config.ip_addr);
 }
 
 
@@ -233,7 +238,39 @@ IPAddress HalowSTAClass::localIP()
  */
 uint8_t* HalowSTAClass::macAddress(uint8_t* mac)
 {
-    mmwlan_get_mac_addr(mac);
+    if (mac == NULL)
+    {
+        return NULL;
+    }
+
+    memset(mac, 0, 6);
+
+    /* In AP mode report the AP BSSID (device MAC ^ 0x02), which is the address
+     * used by AP clients. */
+    if (!_mesh_mode && halow_mode == MMWLAN_VIF_AP)
+    {
+        if (mmwlan_ap_get_bssid(mac) == MMWLAN_SUCCESS)
+        {
+            return mac;
+        }
+    }
+
+    /* Mesh mode has no separate AP data VIF; the mesh interface uses the
+     * STA/device MAC, which is also the unique peer-visible mesh address. */
+    enum mmwlan_vif vif = _mesh_mode ? MMWLAN_VIF_STA : halow_mode;
+
+    if (mmwlan_get_vif_mac_addr(vif, mac) == MMWLAN_SUCCESS)
+    {
+        return mac;
+    }
+
+    if (mmwlan_get_vif_mac_addr(MMWLAN_VIF_STA, mac) == MMWLAN_SUCCESS ||
+        mmwlan_get_vif_mac_addr(MMWLAN_VIF_AP, mac) == MMWLAN_SUCCESS)
+    {
+        return mac;
+    }
+
+    (void)mmwlan_ap_get_bssid(mac);
     return mac;
 }
 
@@ -245,7 +282,7 @@ String HalowSTAClass::macAddress(void)
 {
     uint8_t mac[6];
     char macStr[18] = { 0 };
-    mmwlan_get_mac_addr(mac);
+    macAddress(mac);
     sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     return String(macStr);
 }
@@ -256,9 +293,13 @@ String HalowSTAClass::macAddress(void)
  */
 IPAddress HalowSTAClass::subnetMask()
 {
+  struct mmipal_ip_config config;
+
   if (status() != WL_CONNECTED)
     return IPAddress();
-  return IPAddress(mmipal_data.lwip_mmnetif.netmask.u_addr.ip4.addr);
+  if (mmipal_get_ip_config(&config) != MMIPAL_SUCCESS)
+    return IPAddress();
+  return IPAddress(config.netmask);
 }
 
 /**
@@ -267,9 +308,13 @@ IPAddress HalowSTAClass::subnetMask()
  */
 IPAddress HalowSTAClass::gatewayIP()
 {
+  struct mmipal_ip_config config;
+
   if (status() != WL_CONNECTED)
     return IPAddress();
-  return IPAddress(mmipal_data.lwip_mmnetif.gw.u_addr.ip4.addr);
+  if (mmipal_get_ip_config(&config) != MMIPAL_SUCCESS)
+    return IPAddress();
+  return IPAddress(config.gateway_addr);
 }
 
 
@@ -386,7 +431,15 @@ int8_t HalowSTAClass::RSSI(void)
  */
 struct netif* HalowSTAClass::netif(void)
 {
-    return &(mmipal_data.lwip_mmnetif);
+    /* Return the HaLow netif, not the current default (which may be WiFi). */
+    for (struct netif *netif = netif_list; netif != NULL; netif = netif->next)
+    {
+        if (netif->name[0] == 'M' && netif->name[1] == 'M')
+        {
+            return netif;
+        }
+    }
+    return netif_default;
 }
 //HalowSTAClass HaLow;
 

@@ -1,0 +1,391 @@
+/*
+ * SPDX-FileCopyrightText: 2020-2026 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#pragma once
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+
+/**
+ * c99 standard still doesn't strictly inline functions
+ * We need to use attribute as well to do this.
+ */
+#define __NN_FORCE_INLINE__ __attribute((always_inline)) static inline
+
+/* min/max macros */
+#ifndef max
+#define max(a, b) ({            \
+    __typeof__ (a) _a = (a);    \
+    __typeof__ (b) _b = (b);    \
+    _a > _b ? _a : _b;          \
+})
+
+#define min(a, b) ({            \
+    __typeof__ (a) _a = (a);    \
+    __typeof__ (b) _b = (b);    \
+    _a < _b ? _a : _b;          \
+})
+#endif
+
+__NN_FORCE_INLINE__ int32_t esp_nn_clz32(uint32_t in)
+{
+#if CONFIG_IDF_TARGET_ARCH_XTENSA
+    __asm__ volatile("nsau %0, %0" : "+r" (in));
+    return in;
+#elif defined(__GNUC__)
+    return __builtin_clz(in);
+#else
+    int32_t count = 32;
+    uint32_t x = in, y = in >> 16;
+    if (y != 0) {
+        count -= 16;
+        x = y;
+    }
+    y = x >> 8;
+    if (y != 0) {
+        count -= 8;
+        x = y;
+    }
+    y = x >> 4;
+    if (y != 0) {
+        count -= 4;
+        x = y;
+    }
+    y = x >> 2;
+    if (y != 0) {
+        count -= 2;
+        x = y;
+    }
+    y = x >> 1;
+    if (y != 0) {
+        return count - 2;
+    }
+    return count - x;
+#endif
+}
+
+/**
+ * Signed saturate a 32 bit value to 8 bits keeping output in 32 bit variable.
+ */
+__NN_FORCE_INLINE__ int32_t esp_nn_saturate8(int32_t in)
+{
+#if CONFIG_IDF_TARGET_ARCH_XTENSA
+    __asm__ volatile("clamps %0, %0, 7" : "+a"(in));
+    return in;
+#else
+    return max(INT8_MIN, min(in, INT8_MAX));
+#endif
+}
+
+__NN_FORCE_INLINE__ int32_t esp_nn_pick_sat_high32_of64(int64_t val64)
+{
+    int32_t sign = (int32_t) (val64 >> 63);
+    int32_t to_add = sign & ((1ul << 31) - 1);
+    return (int32_t) ((int64_t) (val64 + to_add) >> 31);
+}
+
+__NN_FORCE_INLINE__ int32_t esp_nn_sat_round_doubling_high_mul(int32_t in0, int32_t in1)
+{
+    int32_t result;
+    int64_t in0_64 = (int64_t) in0;
+    bool overflow = (in0 == in1) && (in0 == (int32_t) INT32_MIN);
+
+    /* Nudge value */
+    int64_t nudge_val = 1 << 30;
+    if ((in0 < 0) ^ (in1 < 0)) {
+        nudge_val = 1 - nudge_val;
+    }
+
+    /* Multiply and add nudge */
+    int64_t mult = in0_64 * in1 + nudge_val;
+
+    /* Round and pickup 32 bits */
+    result = esp_nn_pick_sat_high32_of64(mult);
+
+    return overflow ? INT32_MAX : result;
+}
+
+/**
+ * fast version
+ * this will fail for values closer to INT32_MAX and INT32_MIN by `1 << (exponent - 1)`.
+ * We can afford to do this because we are at the very last stage of filter.
+ * Also it is pretty rare condition as our output is going to be 8 bit.
+ */
+__NN_FORCE_INLINE__ int32_t esp_nn_div_by_power_of_two_fast(int32_t val, int32_t exponent)
+{
+    int32_t to_add = (1 << (exponent - 1)) - (val < 0);
+    return (int32_t) ((val + to_add) >> exponent);
+}
+
+__NN_FORCE_INLINE__ int32_t esp_nn_div_by_power_of_two(int32_t val, int32_t exponent)
+{
+    int32_t result;
+
+    const int32_t mask = (1 << exponent) - 1;
+    const int32_t remainder = val & mask;
+
+    result = val >> exponent;
+    int32_t threshold = (mask >> 1) + (result < 0);
+
+    if (remainder > threshold) {
+        result += 1;
+    }
+    return result;
+}
+
+__NN_FORCE_INLINE__ int32_t esp_nn_multiply_by_quantized_mult(int32_t x, int32_t mult, int32_t shift)
+{
+    int32_t left_shift = shift > 0 ? shift : 0;
+    int32_t right_shift = shift > 0 ? 0 : -shift;
+    int32_t result = esp_nn_sat_round_doubling_high_mul(x * (1 << left_shift), mult);
+    return esp_nn_div_by_power_of_two(result, right_shift);
+}
+
+#if CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
+/**
+ * Enable PIE and its unaligned 128-bit loads (CFG bit 1) and stores (bit 0).
+ *
+ * With bit 1 clear, esp.vld.128 silently loads from addr & ~15, so any kernel
+ * reading a tensor pointer it does not own (filter, input) gets wrong data.
+ * With bit 0 clear, esp.vst.128 stores to addr & ~15: max pool's per-pixel
+ * store with a channel count that is not a multiple of 16 then overwrites the
+ * previous pixel (max_pool case 15, 20 channels). IDF does not save CFG in the
+ * task's PIE context, so it is per-core state that other code may change
+ * between calls: call this at the entry of every public PIE kernel and every
+ * dual-core worker job, not in setup calls.
+ */
+#define ESP_NN_PIE_ENABLE() do { \
+    asm volatile ( \
+        "csrsi  0x7f2, 0b01        \n\t" \
+        "esp.movx.r.cfg x29        \n\t" \
+        "ori    x29, x29, 0b11     \n\t" \
+        "esp.movx.w.cfg x29        \n\t" \
+        ::: "x29" \
+    ); \
+} while(0)
+
+/** Extract 16 int32 per-lane results from QACC into array */
+#define ESP_NN_QACC_EXTRACT_S32(dst) do { \
+    asm volatile ( \
+        "mv                      x30, %0     \n\t" \
+        "esp.st.qacc.l.l.128.ip  x30, 16     \n\t" \
+        "esp.st.qacc.l.h.128.ip  x30, 16     \n\t" \
+        "esp.st.qacc.h.l.128.ip  x30, 16     \n\t" \
+        "esp.st.qacc.h.h.128.ip  x30, 0      \n\t" \
+        :: "r"(dst) \
+        : "x30", "memory" \
+    ); \
+} while(0)
+#endif /* CONFIG_IDF_TARGET_ESP32P4 - PIE_ENABLE and QACC_EXTRACT */
+
+/**
+ * 2-wide interleaved requant macro for ESP32-P4 RISC-V.
+ * Interleaves mulh across two independent elements for pipeline fill.
+ * Outputs r0, r1 as requantized int32 values (before offset/clamp).
+ */
+#if CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
+#define ESP_NN_REQUANT_2X(x0, x1, m0, m1, s0, s1, r0, r1) do { \
+    int32_t _ls0 = (s0) > 0 ? (s0) : 0; \
+    int32_t _ls1 = (s1) > 0 ? (s1) : 0; \
+    int32_t _v0 = (x0) << _ls0; \
+    int32_t _v1 = (x1) << _ls1; \
+    int32_t _rs0 = _ls0 - (s0); \
+    int32_t _rs1 = _ls1 - (s1); \
+    int32_t _hi0, _lo0, _hi1, _lo1; \
+    asm volatile ( \
+        "mulh  %[h0], %[v0], %[mm0]  \n\t" \
+        "mulh  %[h1], %[v1], %[mm1]  \n\t" \
+        "mul   %[l0], %[v0], %[mm0]  \n\t" \
+        "mul   %[l1], %[v1], %[mm1]  \n\t" \
+        : [h0] "=&r"(_hi0), [h1] "=&r"(_hi1), \
+          [l0] "=&r"(_lo0), [l1] "=&r"(_lo1) \
+        : [v0] "r"(_v0), [v1] "r"(_v1), \
+          [mm0] "r"((int32_t)(m0)), [mm1] "r"((int32_t)(m1)) \
+    ); \
+    /* Add nudge (1<<30) and extract bits [31:62] */ \
+    uint32_t _n = 0x40000000u; \
+    uint32_t _a0 = (uint32_t)_lo0 + _n; \
+    _hi0 += (_a0 < (uint32_t)_lo0); \
+    (r0) = (_hi0 << 1) | (_a0 >> 31); \
+    uint32_t _a1 = (uint32_t)_lo1 + _n; \
+    _hi1 += (_a1 < (uint32_t)_lo1); \
+    (r1) = (_hi1 << 1) | (_a1 >> 31); \
+    /* Right shift with rounding */ \
+    if (_rs0) { (r0) = ((r0) + (1 << (_rs0 - 1)) - ((r0) < 0)) >> _rs0; } \
+    if (_rs1) { (r1) = ((r1) + (1 << (_rs1 - 1)) - ((r1) < 0)) >> _rs1; } \
+} while(0)
+#endif
+
+__NN_FORCE_INLINE__ int32_t esp_nn_multiply_by_quantized_mult_fast(int32_t x, int32_t mult, int32_t shift)
+{
+    int32_t left_shift = max(shift, 0);
+    int32_t right_shift = left_shift - shift;
+
+    int64_t nudge_val = 1 << 30;
+    int64_t in0_64 = (int64_t) (x << left_shift);
+
+    /* Multiply and add nudge */
+    int64_t mult_64 = in0_64 * mult + nudge_val;
+    int32_t result = (int32_t) (mult_64 >> 31);
+    if (right_shift) {
+        result = esp_nn_div_by_power_of_two_fast(result, right_shift);
+    }
+    return result;
+}
+
+/*
+ * Unified requantize wrapper. Defining either SKIP_NUDGE (legacy) or
+ * CONFIG_NN_SKIP_NUDGE (Kconfig-driven) selects the faster, non-bit-exact
+ * path; otherwise the bit-exact TFLite-reference path is used.
+ */
+#if defined(SKIP_NUDGE) || defined(CONFIG_NN_SKIP_NUDGE)
+#define esp_nn_requantize(x, m, s) esp_nn_multiply_by_quantized_mult_fast((x), (m), (s))
+#else
+#define esp_nn_requantize(x, m, s) esp_nn_multiply_by_quantized_mult((x), (m), (s))
+#endif
+
+static void esp_nn_aligned_s8_pad_with_value(const int8_t *src, int8_t *dst,
+                                             const uint16_t input_wd,
+                                             const uint16_t input_ht,
+                                             const uint16_t channels,
+                                             const int32_t pad_val,
+                                             const uint16_t pad_wd,
+                                             const uint16_t pad_ht)
+{
+    /* memset with pad_val */
+    memset(dst, pad_val, ((input_wd + 2 * pad_wd) * (input_ht + 2 * pad_ht)) * channels);
+    dst += (pad_wd + input_wd + pad_wd) * pad_ht * channels;
+
+    for (int i = 0; i < input_ht; i++) {
+        dst += pad_wd * channels;
+        for (int j = 0; j < input_wd * channels; j++) {
+            *dst++ = *src++;
+        }
+        dst += pad_wd * channels;
+    }
+}
+
+/*
+ * Pad with independent amounts on all four sides. TFLite passes only the
+ * leading (top/left) "SAME" padding; when the total padding for a dimension
+ * is odd, the extra trailing (bottom/right) padding is implicit and may
+ * exceed the leading one, so a symmetric pad is not sufficient.
+ */
+static void esp_nn_aligned_s8_pad_asymmetric(const int8_t *src, int8_t *dst,
+                                             const uint16_t input_wd,
+                                             const uint16_t input_ht,
+                                             const uint16_t channels,
+                                             const int32_t pad_val,
+                                             const uint16_t pad_left,
+                                             const uint16_t pad_top,
+                                             const uint16_t pad_right,
+                                             const uint16_t pad_bottom)
+{
+    const int32_t padded_row = (pad_left + input_wd + pad_right) * channels;
+
+    memset(dst, pad_val, padded_row * pad_top);
+    dst += padded_row * pad_top;
+
+    for (int i = 0; i < input_ht; i++) {
+        memset(dst, pad_val, pad_left * channels);
+        dst += pad_left * channels;
+        memcpy(dst, src, input_wd * channels);
+        dst += input_wd * channels;
+        src += input_wd * channels;
+        memset(dst, pad_val, pad_right * channels);
+        dst += pad_right * channels;
+    }
+
+    memset(dst, pad_val, padded_row * pad_bottom);
+}
+
+static void esp_nn_aligned_s8_pad_end_with_value(const int8_t *src, int8_t *dst,
+                                                 const uint16_t input_wd,
+                                                 const uint16_t input_ht,
+                                                 const uint16_t channels,
+                                                 const int32_t pad_val,
+                                                 const uint16_t pad_wd,
+                                                 const uint16_t pad_ht)
+{
+    for (int i = 0; i < input_ht; i++) {
+        for (int j = 0; j < input_wd * channels; j++) {
+            *dst++ = *src++;
+        }
+        if (pad_wd) {
+            memset(dst, pad_val, pad_wd * channels);
+            dst += pad_wd * channels;
+        }
+    }
+    /* pad end `pad_ht` lines at end */
+    if (pad_ht) {
+        memset(dst, pad_val, (input_wd + pad_wd) * pad_ht * channels);
+    }
+}
+
+/**
+ * @brief       convert 8 bit input data to 16 bit
+ *
+ * @param       src int8_t source data
+ * @param       dst int16_t dst data
+ * @param       size length of data
+ * @param       offset  offset to be added to src data. Range: [-128, 127]
+ */
+__NN_FORCE_INLINE__ void esp_nn_s8_to_s16_with_offset(const int8_t *src, int16_t *dst,
+                                                      const int size, const int32_t offset)
+{
+    int i = 0;
+    for (; i < size; i += 2) {
+        dst[i + 0] = src[i + 0] + offset;
+        dst[i + 1] = src[i + 1] + offset;
+    }
+    if(i < size) {
+        dst[i] = src[i] + offset;
+    }
+}
+
+/**
+ * @brief       convert 8 bit input data to 16 bit
+ *
+ * @param       src int8_t source data
+ * @param       dst int16_t dst data
+ * @param       size length of data
+ */
+__NN_FORCE_INLINE__ void esp_nn_s8_to_s16(const int8_t *src, int16_t *dst, const int size)
+{
+    int i = 0;
+    for (; i < size; i += 2) {
+        dst[i + 0] = src[i + 0];
+        dst[i + 1] = src[i + 1];
+    }
+    if(i < size) {
+        dst[i] = src[i];
+    }
+}
+
+#if CONFIG_IDF_TARGET_ESP32S3
+/**
+ * @brief       s8 dot product — both pointers 16-byte aligned.
+ *              Uses ACCX accumulator with fused MAC+load.
+ *
+ * @param       a       input data (16-byte aligned)
+ * @param       b       filter data (16-byte aligned)
+ * @param       len     number of elements (must be multiple of 16, >= 16)
+ * @return      int32_t dot product result
+ */
+extern int32_t esp_nn_dot_s8_aligned_esp32s3(const int8_t *a, const int8_t *b, int32_t len);
+
+/**
+ * @brief       s8 dot product — input aligned, filter may be unaligned.
+ *              Uses USAR+QUP pattern for filter data.
+ *
+ * @param       a       input data (16-byte aligned)
+ * @param       b       filter data (may be unaligned)
+ * @param       len_div16  number of 16-element chunks (>= 1)
+ * @return      int32_t dot product result
+ */
+extern int32_t esp_nn_dot_s8_unaligned_esp32s3(const int8_t *a, const int8_t *b, int32_t len_div16);
+#endif

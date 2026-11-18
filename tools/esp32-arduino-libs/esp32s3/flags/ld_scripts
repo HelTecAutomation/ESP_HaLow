@@ -1,0 +1,1 @@
+-T esp32s3.peripherals.ld -T esp32s3.rom.ld -T esp32s3.rom.api.ld -T esp32s3.rom.bt_funcs.ld -T esp32s3.rom.libgcc.ld -T esp32s3.rom.newlib.ld -T esp32s3.rom.version.ld -T esp32s3.rom.ble_cca.ld -T esp32s3.rom.ble_test.ld -T memory.ld -T sections.ld 

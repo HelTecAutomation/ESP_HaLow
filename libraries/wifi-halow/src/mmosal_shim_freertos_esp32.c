@@ -14,7 +14,6 @@
 #include "esp_private/startup_internal.h"
 #include "esp_idf_version.h"
 #include "esp_timer.h"
-#include "esp_rom_sys.h"
 
 #include "mmosal.h"
 #include "mmhal_os.h"
@@ -208,7 +207,26 @@ struct mmosal_task *mmosal_task_create(mmosal_task_fn_t task_fn,
                                        const char *name)
 {
     TaskHandle_t handle;
-    UBaseType_t freertos_priority = tskIDLE_PRIORITY + priority;
+    UBaseType_t freertos_priority = tskIDLE_PRIORITY;
+
+    switch (priority)
+    {
+    case MMOSAL_TASK_PRI_MIN:
+        freertos_priority = 1;
+        break;
+    case MMOSAL_TASK_PRI_LOW:
+        freertos_priority = 5;
+        break;
+    case MMOSAL_TASK_PRI_NORM:
+        freertos_priority = 10;
+        break;
+    case MMOSAL_TASK_PRI_HIGH:
+        freertos_priority = 20;
+        break;
+    default:
+        freertos_priority = 0;
+        break;
+    }
 
     struct mmosal_task_arg *task_arg = (struct mmosal_task_arg *)mmosal_malloc(sizeof(*task_arg));
     if (task_arg == NULL)
@@ -345,50 +363,17 @@ void mmosal_mutex_delete(struct mmosal_mutex *mutex)
 
 bool mmosal_mutex_get(struct mmosal_mutex *mutex, uint32_t timeout_ms)
 {
-    if (mutex == NULL)
-        return false;
-
-    SemaphoreHandle_t hMutex = (SemaphoreHandle_t)mutex;
-    BaseType_t ret = pdFALSE;
-
-    if (xPortInIsrContext())
+    uint32_t timeout_ticks = portMAX_DELAY;
+    if (timeout_ms != UINT32_MAX)
     {
-        BaseType_t xWoken = pdFALSE;
-        ret = xSemaphoreTakeFromISR(hMutex, &xWoken);
-        portYIELD_FROM_ISR(xWoken);
+        timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
     }
-    else
-    {
-        uint32_t timeout_ticks = portMAX_DELAY;
-        if (timeout_ms != UINT32_MAX)
-        {
-            timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
-        }
-        ret = xSemaphoreTake(hMutex, timeout_ticks);
-    }
-
-    return (ret == pdPASS);
+    return (xSemaphoreTake((SemaphoreHandle_t)mutex, timeout_ticks) == pdPASS);
 }
 
 bool mmosal_mutex_release(struct mmosal_mutex *mutex)
 {
-    if (mutex == NULL) return pdFALSE;
-
-    SemaphoreHandle_t hMutex = (SemaphoreHandle_t)mutex;
-    BaseType_t ret = pdFALSE;
-
-    if (xPortInIsrContext())
-    {
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        ret = xSemaphoreGiveFromISR(hMutex, &xHigherPriorityTaskWoken);
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    }
-    else
-    {
-        ret = xSemaphoreGive(hMutex);
-    }
-
-    return (ret == pdPASS);
+    return (xSemaphoreGive((SemaphoreHandle_t)mutex) == pdPASS);
 }
 
 bool mmosal_mutex_is_held_by_active_task(struct mmosal_mutex *mutex)
@@ -420,23 +405,7 @@ void mmosal_sem_delete(struct mmosal_sem *sem)
 
 bool mmosal_sem_give(struct mmosal_sem *sem)
 {
-    if (sem == NULL)
-        return false;
-
-    SemaphoreHandle_t hSem = (SemaphoreHandle_t)sem;
-    BaseType_t ret;
-
-    if (xPortInIsrContext())
-    {
-        BaseType_t task_woken = pdFALSE;
-        ret = xSemaphoreGiveFromISR(hSem, &task_woken);
-        portYIELD_FROM_ISR(task_woken);
-    }
-    else
-    {
-        ret = xSemaphoreGive(hSem);
-    }
-    return (ret == pdPASS);
+    return xSemaphoreGive((SemaphoreHandle_t)sem);
 }
 
 bool mmosal_sem_give_from_isr(struct mmosal_sem *sem)
@@ -456,28 +425,12 @@ bool mmosal_sem_give_from_isr(struct mmosal_sem *sem)
 
 bool mmosal_sem_wait(struct mmosal_sem *sem, uint32_t timeout_ms)
 {
-    if (sem == NULL)
-        return false;
-
-    SemaphoreHandle_t hSem = (SemaphoreHandle_t)sem;
-    BaseType_t ret;
-
-    if (xPortInIsrContext())
+    uint32_t timeout_ticks = portMAX_DELAY;
+    if (timeout_ms != UINT32_MAX)
     {
-        BaseType_t task_woken = pdFALSE;
-        ret = xSemaphoreTakeFromISR(hSem, &task_woken);
-        portYIELD_FROM_ISR(task_woken);
+        timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
     }
-    else
-    {
-        uint32_t timeout_ticks = portMAX_DELAY;
-        if (timeout_ms != UINT32_MAX)
-        {
-            timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
-        }
-        ret = xSemaphoreTake(hSem, timeout_ticks);
-    }
-    return (ret == pdPASS);
+    return (xSemaphoreTake((SemaphoreHandle_t)sem, timeout_ticks) == pdPASS);
 }
 
 uint32_t mmosal_sem_get_count(struct mmosal_sem *sem)
@@ -508,23 +461,7 @@ void mmosal_semb_delete(struct mmosal_semb *semb)
 
 bool mmosal_semb_give(struct mmosal_semb *semb)
 {
-    if (semb == NULL)
-        return false;
-
-    SemaphoreHandle_t hSem = (SemaphoreHandle_t)semb;
-    BaseType_t ret;
-
-    if (xPortInIsrContext())
-    {
-        BaseType_t task_woken = pdFALSE;
-        ret = xSemaphoreGiveFromISR(hSem, &task_woken);
-        portYIELD_FROM_ISR(task_woken);
-    }
-    else
-    {
-        ret = xSemaphoreGive(hSem);
-    }
-    return (ret == pdPASS);
+    return (xSemaphoreGive((SemaphoreHandle_t)semb) == pdPASS);
 }
 
 bool mmosal_semb_give_from_isr(struct mmosal_semb *semb)
@@ -544,28 +481,12 @@ bool mmosal_semb_give_from_isr(struct mmosal_semb *semb)
 
 bool mmosal_semb_wait(struct mmosal_semb *semb, uint32_t timeout_ms)
 {
-    if (semb == NULL)
-        return false;
-
-    SemaphoreHandle_t hSem = (SemaphoreHandle_t)semb;
-    BaseType_t ret;
-
-    if (xPortInIsrContext())
+    uint32_t timeout_ticks = portMAX_DELAY;
+    if (timeout_ms != UINT32_MAX)
     {
-        BaseType_t task_woken = pdFALSE;
-        ret = xSemaphoreTakeFromISR(hSem, &task_woken);
-        portYIELD_FROM_ISR(task_woken);
+        timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
     }
-    else
-    {
-        uint32_t timeout_ticks = portMAX_DELAY;
-        if (timeout_ms != UINT32_MAX)
-        {
-            timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
-        }
-        ret = xSemaphoreTake(hSem, timeout_ticks);
-    }
-    return (ret == pdPASS);
+    return (xSemaphoreTake((SemaphoreHandle_t)semb, timeout_ticks) == pdPASS);
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -591,54 +512,22 @@ void mmosal_queue_delete(struct mmosal_queue *queue)
 
 bool mmosal_queue_pop(struct mmosal_queue *queue, void *item, uint32_t timeout_ms)
 {
-    if (queue == NULL || item == NULL)
-        return false;
-
-    QueueHandle_t hQueue = (QueueHandle_t)queue;
-    BaseType_t ret;
-
-    if (xPortInIsrContext())
+    uint32_t timeout_ticks = portMAX_DELAY;
+    if (timeout_ms != UINT32_MAX)
     {
-        BaseType_t task_woken = pdFALSE;
-        ret = xQueueReceiveFromISR(hQueue, item, &task_woken);
-        portYIELD_FROM_ISR(task_woken);
+        timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
     }
-    else
-    {
-        uint32_t timeout_ticks = portMAX_DELAY;
-        if (timeout_ms != UINT32_MAX)
-        {
-            timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
-        }
-        ret = xQueueReceive(hQueue, item, timeout_ticks);
-    }
-    return (ret == pdPASS);
+    return (xQueueReceive((SemaphoreHandle_t)queue, item, timeout_ticks) == pdPASS);
 }
 
 bool mmosal_queue_push(struct mmosal_queue *queue, const void *item, uint32_t timeout_ms)
 {
-    if (queue == NULL || item == NULL)
-        return false;
-
-    QueueHandle_t hQueue = (QueueHandle_t)queue;
-    BaseType_t ret;
-
-    if (xPortInIsrContext())
+    uint32_t timeout_ticks = portMAX_DELAY;
+    if (timeout_ms != UINT32_MAX)
     {
-        BaseType_t task_woken = pdFALSE;
-        ret = xQueueSendToBackFromISR(hQueue, item, &task_woken);
-        portYIELD_FROM_ISR(task_woken);
+        timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
     }
-    else
-    {
-        uint32_t timeout_ticks = portMAX_DELAY;
-        if (timeout_ms != UINT32_MAX)
-        {
-            timeout_ticks = timeout_ms / portTICK_PERIOD_MS;
-        }
-        ret = xQueueSendToBack(hQueue, item, timeout_ticks);
-    }
-    return (ret == pdPASS);
+    return (xQueueSendToBack((SemaphoreHandle_t)queue, item, timeout_ticks) == pdPASS);
 }
 
 bool mmosal_queue_pop_from_isr(struct mmosal_queue *queue, void *item)
@@ -802,27 +691,12 @@ bool mmosal_is_timer_active(struct mmosal_timer *timer)
 
 /* --------------------------------------------------------------------------------------------- */
 
-#include <stdarg.h>
-
 int mmosal_printf(const char *format, ...)
 {
     int ret;
     va_list args;
     va_start(args, format);
-
-    // 判断是否处于中断上下文
-    /*
-    if (xPortInIsrContext())
-    {
-        // 中断：使用 ESP 中断安全串口输出（无锁）
-        ret = esp_rom_vprintf(format, args);
-    }
-    else
-    {*/
-        // 普通任务：正常走标准 vprintf
-        ret = vprintf(format, args);
-    //}
-
+    ret = vprintf(format, args);
     va_end(args);
     return ret;
 }
