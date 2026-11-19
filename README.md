@@ -27,11 +27,15 @@ Arduino source codes and tool chain for ESP32&Wi-Fi_HaLow series made by Heltec 
 - AP mode supports up to 8 STAs; mesh mode supports up to 8 peers.
 - 802.11s mesh peer whitelist, forwarding statistics and per-peer link statistics.
 - RSSI, noise, bandwidth and frequency reporting for STA and mesh links.
-- NAPT between Wi-Fi and HaLow:
+- NAPT between Wi-Fi/Ethernet and HaLow:
   - Wi-Fi STA uplink to HaLow AP
   - HaLow STA uplink to Wi-Fi AP
   - Wi-Fi STA uplink to mesh gateway
   - Mesh point uplink to Wi-Fi AP
+  - Ethernet uplink (W5500) to HaLow AP
+  - Ethernet uplink (W5500) to mesh gateway
+  - HaLow STA uplink to Ethernet (W5500) downstream
+  - Mesh point uplink to Ethernet (W5500) downstream
 - TCP/UDP throughput tests with fixed configuration or serial commands.
 - Arduino event API for STA, AP and mesh state changes, including mesh peer connect/disconnect events.
 - HTTP/HTTPS client, web server, camera web server, MQTT and HTTP/Web OTA examples.
@@ -53,6 +57,10 @@ Arduino source codes and tool chain for ESP32&Wi-Fi_HaLow series made by Heltec 
 | `NAPT_HalowSTA_to_WiFiAP` | HaLow STA uplink to Wi-Fi AP NAPT |
 | `NAPT_WiFi_to_MeshGateway` | Wi-Fi STA uplink to mesh gateway NAPT |
 | `NAPT_MeshPoint_to_WiFiAP` | Mesh point uplink to Wi-Fi AP NAPT |
+| `NAPT_eth_to_HalowAP` | W5500 Ethernet uplink to HaLow AP NAPT |
+| `NAPT_eth_to_MeshGateway` | W5500 Ethernet uplink to mesh gateway NAPT |
+| `NAPT_HalowSTA_to_eth` | HaLow STA uplink to W5500 Ethernet downstream NAPT |
+| `NAPT_MeshPoint_to_eth` | Mesh point uplink to W5500 Ethernet downstream NAPT |
 | `UART_TCP_Client` / `UART_UDP_Client` | UART to TCP/UDP bridge |
 | `UDP_Client_lowpower` | Low-power UDP client |
 | `BasicHttpsClient` / `HalowBasicHttpClient` | HTTP/HTTPS client |
@@ -123,11 +131,15 @@ Also you can talk in our forum: [http://community.heltec.cn/](http://community.h
 - AP 模式最多支持 8 个 STA；Mesh 模式最多支持 8 个 peer。
 - 支持 802.11s mesh peer 白名单、转发统计和逐 peer 链路统计。
 - 支持 STA 和 mesh 链路的 RSSI、噪声、带宽和频率输出。
-- 支持 Wi-Fi 与 HaLow 之间的 NAPT：
+- 支持 Wi-Fi/Ethernet 与 HaLow 之间的 NAPT：
   - Wi-Fi STA 上行到 HaLow AP
   - HaLow STA 上行到 Wi-Fi AP
   - Wi-Fi STA 上行到 Mesh Gateway
   - Mesh Point 上行到 Wi-Fi AP
+  - Ethernet（W5500）上行到 HaLow AP
+  - Ethernet（W5500）上行到 Mesh Gateway
+  - HaLow STA 上行到 Ethernet（W5500）下行
+  - Mesh Point 上行到 Ethernet（W5500）下行
 - 支持固定配置和串口命令两种 TCP/UDP 吞吐测试方式。
 - 提供 Arduino 事件 API，支持 STA、AP 和 Mesh 状态变化，包括 mesh peer 连接/断开事件。
 - 提供 HTTP/HTTPS client、Web server、Camera Web server、MQTT 和 HTTP/Web OTA 示例。
@@ -149,6 +161,10 @@ Also you can talk in our forum: [http://community.heltec.cn/](http://community.h
 | `NAPT_HalowSTA_to_WiFiAP` | HaLow STA 上行到 Wi-Fi AP 的 NAPT |
 | `NAPT_WiFi_to_MeshGateway` | Wi-Fi STA 上行到 Mesh Gateway 的 NAPT |
 | `NAPT_MeshPoint_to_WiFiAP` | Mesh Point 上行到 Wi-Fi AP 的 NAPT |
+| `NAPT_eth_to_HalowAP` | W5500 Ethernet 上行到 HaLow AP 的 NAPT |
+| `NAPT_eth_to_MeshGateway` | W5500 Ethernet 上行到 Mesh Gateway 的 NAPT |
+| `NAPT_HalowSTA_to_eth` | HaLow STA 上行到 W5500 Ethernet 下行的 NAPT |
+| `NAPT_MeshPoint_to_eth` | Mesh Point 上行到 W5500 Ethernet 下行的 NAPT |
 | `UART_TCP_Client` / `UART_UDP_Client` | UART 转 TCP/UDP |
 | `UDP_Client_lowpower` | 低功耗 UDP client |
 | `BasicHttpsClient` / `HalowBasicHttpClient` | HTTP/HTTPS client |
