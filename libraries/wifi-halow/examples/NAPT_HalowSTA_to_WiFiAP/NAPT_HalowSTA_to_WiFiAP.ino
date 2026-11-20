@@ -85,6 +85,63 @@ static bool softap_with_napt() {
 }
 
 
+static void HaLowEvent(HaLowEvent_t event)
+{
+  Serial.printf("[HaLow-event] event: %d - %s\r\n", event, HaLow.eventName(event));
+}
+
+static void printHalowLink()
+{
+  uint8_t bssid[6];
+  struct mmipal_sta_rssi info;
+  bool have_info = false;
+
+  if (HaLow.BSSID(bssid) != NULL &&
+      mmipal_get_sta_rssi(bssid, &info) == MMIPAL_SUCCESS)
+  {
+    have_info = true;
+  }
+
+  int8_t rssi = have_info ? info.rssi : HaLow.RSSI();
+
+  Serial.printf("[HaLow-link] rssi=%d dBm", rssi);
+  if (have_info)
+  {
+    if (info.noise_dbm > -128 && info.noise_dbm < 0)
+    {
+      Serial.printf(" noise=%d dBm", info.noise_dbm);
+    }
+    else
+    {
+      Serial.print(" noise=n/a");
+    }
+    if (info.bw_mhz > 0)
+    {
+      Serial.printf(" bw=%u MHz", info.bw_mhz);
+    }
+    else
+    {
+      Serial.print(" bw=n/a");
+    }
+    if (info.freq_100khz > 0)
+    {
+      Serial.printf(" freq=%u.%u MHz",
+                    (unsigned)(info.freq_100khz / 10),
+                    (unsigned)(info.freq_100khz % 10));
+    }
+    else
+    {
+      Serial.print(" freq=n/a");
+    }
+    Serial.printf(" last_rx=%lu ms", (unsigned long)info.last_rx_ms);
+  }
+  else
+  {
+    Serial.print(" noise=n/a bw=n/a freq=n/a");
+  }
+  Serial.println();
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -106,6 +163,7 @@ void setup()
   }
 #endif
 
+  HaLow.onEvent(HaLowEvent);
   HaLow.init(HALOW_REGION);
   HaLow.begin(HALOW_AP_SSID, HALOW_PASSWORD);
 
@@ -134,6 +192,17 @@ void setup()
 
 void loop()
 {
-  delay(5000);
-  Serial.printf("[time %u s] halow rssi %d\r\n",millis()/1000,HaLow.RSSI());
+  static uint32_t last_report = 0;
+  uint32_t now = millis();
+
+  if (now - last_report >= 5000)
+  {
+    last_report = now;
+    Serial.printf("[%u][NAPT] HaLow=%s WiFiAP=%s\r\n",millis()/1000,
+                  HaLow.localIP().toString().c_str(),
+                  WiFi.softAPIP().toString().c_str());
+    printHalowLink();
+  }
+
+  delay(100);
 }

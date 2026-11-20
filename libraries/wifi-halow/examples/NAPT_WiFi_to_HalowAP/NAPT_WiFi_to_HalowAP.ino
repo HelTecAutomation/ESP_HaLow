@@ -9,6 +9,7 @@
 #include <HaLow.h>
 #include "WiFi.h"
 #include "lwip/tcpip.h"
+#include "mmipal.h"
 
 // Please read REGION_SW_CHANNEL_REF. h to obtain the relationship between region, bandwidth, and channel
 #define HALOW_REGION     "US"
@@ -106,53 +107,6 @@ void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info) {
 }
 
 
-static const char *staStateName(enum mmwlan_ap_sta_state state)
-{
-  switch (state)
-  {
-    case MMWLAN_AP_STA_ASSOCIATED:
-      return "ASSOCIATED";
-    case MMWLAN_AP_STA_AUTHORIZED:
-      return "AUTHORIZED";
-    default:
-      return "UNKNOWN";
-  }
-}
-
-static void printStaStatus()
-{
-  // RSSI/noise are updated when data frames are received from the STA.
-  struct mmwlan_ap_sta_status sta_list[MMWLAN_AP_MAX_STAS_LIMIT];
-  uint8_t count = HaLow.getStationList(sta_list, MMWLAN_AP_MAX_STAS_LIMIT);
-
-  Serial.printf("[STA] connected count: %u\n", count);
-  for (uint8_t i = 0; i < count; i++)
-  {
-    struct mmipal_sta_rssi rssi;
-    enum mmipal_status status = mmipal_get_sta_rssi(sta_list[i].mac_addr, &rssi);
-
-    Serial.printf("[STA %u] %02X:%02X:%02X:%02X:%02X:%02X state=%s aid=%u",
-                  i,
-                  sta_list[i].mac_addr[0], sta_list[i].mac_addr[1],
-                  sta_list[i].mac_addr[2], sta_list[i].mac_addr[3],
-                  sta_list[i].mac_addr[4], sta_list[i].mac_addr[5],
-                  staStateName(sta_list[i].state),
-                  (unsigned)sta_list[i].aid);
-
-    if (status == MMIPAL_SUCCESS)
-    {
-      Serial.printf(" rssi=%d dBm noise=%d dBm bw=%u MHz freq=%lu kHz last_rx=%lu ms\n",
-                    rssi.rssi, rssi.noise_dbm, rssi.bw_mhz,
-                    (unsigned long)rssi.freq_100khz * 100UL,
-                    (unsigned long)rssi.last_rx_ms);
-    }
-    else
-    { 
-      Serial.println(" rssi/noise: no recent data frame");
-    }
-  }
-}
-
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -213,10 +167,63 @@ void setup() {
   Serial.println("Wait for WiFi... ");
 }
 
+static const char *staStateName(enum mmwlan_ap_sta_state state)
+{
+  switch (state)
+  {
+  case MMWLAN_AP_STA_ASSOCIATED:
+    return "ASSOCIATED";
+  case MMWLAN_AP_STA_AUTHORIZED:
+    return "AUTHORIZED";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+static void printHalowStations()
+{
+  struct mmwlan_ap_sta_status sta_list[HALOW_AP_MAX_STAS];
+  uint8_t count = HaLow.getStationList(sta_list, HALOW_AP_MAX_STAS);
+
+  Serial.printf("[STA] connected count: %u\r\n", count);
+  for (uint8_t i = 0; i < count; i++)
+  {
+    struct mmipal_sta_rssi rssi;
+    enum mmipal_status status = mmipal_get_sta_rssi(sta_list[i].mac_addr, &rssi);
+    uint32_t last_seen = mmwlan_ap_get_sta_last_seen_ms(sta_list[i].mac_addr);
+
+    Serial.printf("[STA %u] %02X:%02X:%02X:%02X:%02X:%02X state=%s aid=%u last_80211=%lu ms",
+                  i,
+                  sta_list[i].mac_addr[0], sta_list[i].mac_addr[1],
+                  sta_list[i].mac_addr[2], sta_list[i].mac_addr[3],
+                  sta_list[i].mac_addr[4], sta_list[i].mac_addr[5],
+                  staStateName(sta_list[i].state),
+                  (unsigned)sta_list[i].aid,
+                  (unsigned long)last_seen);
+
+    if (status == MMIPAL_SUCCESS)
+    {
+      Serial.printf(" rssi=%d dBm noise=%d dBm bw=%u MHz freq=%lu kHz last_data_rx=%lu ms\r\n",
+                    rssi.rssi, rssi.noise_dbm, rssi.bw_mhz,
+                    (unsigned long)rssi.freq_100khz * 100UL,
+                    (unsigned long)rssi.last_rx_ms);
+    }
+    else
+    {
+      Serial.println(" rssi/noise: no recent data");
+    }
+  }
+}
+
 void loop() {
-  // put your main code here, to run repeatedly:
-  delay(30000);
-  Serial.printf("[%u]\r\n",millis()/1000);
-  printStaStatus();
+  static uint32_t last_report = 0;
+  uint32_t now = millis();
+
+  if (now - last_report >= 30000) {
+    last_report = now;
+    printHalowStations();
+  }
+
+  delay(100);
 }
 

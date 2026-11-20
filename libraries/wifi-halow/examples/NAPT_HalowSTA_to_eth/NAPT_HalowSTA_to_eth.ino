@@ -230,6 +230,40 @@ static void onEthEvent(arduino_event_id_t event, arduino_event_info_t info)
   }
 }
 
+static void HaLowEvent(HaLowEvent_t event)
+{
+  Serial.printf("[HaLow-event] event: %d - %s\r\n", event, HaLow.eventName(event));
+
+  switch (event)
+  {
+  case ARDUINO_HALOW_EVENT_STA_CONNECTING:
+    Serial.println("[HaLow] connecting to AP");
+    break;
+
+  case ARDUINO_HALOW_EVENT_STA_CONNECTED:
+    Serial.print("[HaLow] connected, BSSID: ");
+    Serial.println(HaLow.BSSIDstr());
+    break;
+
+  case ARDUINO_HALOW_EVENT_STA_DISCONNECTED:
+    Serial.println("[HaLow] disconnected from AP");
+    break;
+
+  case ARDUINO_HALOW_EVENT_GOT_IP:
+    Serial.printf("[HaLow] got IP: %s gateway: %s\r\n",
+                  HaLow.localIP().toString().c_str(),
+                  HaLow.gatewayIP().toString().c_str());
+    break;
+
+  case ARDUINO_HALOW_EVENT_LOST_IP:
+    Serial.println("[HaLow] lost IP address");
+    break;
+
+  default:
+    break;
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -237,6 +271,8 @@ void setup()
 
   Serial.printf("\r\nHaLow STA IP mode: %s\r\n",
                 HALOW_USE_DHCP ? "DHCP" : "static");
+
+  HaLow.onEvent(HaLowEvent);
 
 #ifdef HT_RC3268
   pinMode(HALOW_LDO_CTRL, OUTPUT);
@@ -308,6 +344,58 @@ void setup()
   }
 }
 
+static void printHalowLink()
+{
+  uint8_t bssid[6];
+  struct mmipal_sta_rssi info;
+  bool have_info = false;
+
+  if (HaLow.BSSID(bssid) != NULL &&
+      mmipal_get_sta_rssi(bssid, &info) == MMIPAL_SUCCESS)
+  {
+    have_info = true;
+  }
+
+  int8_t rssi = have_info ? info.rssi : HaLow.RSSI();
+
+  Serial.printf("[HaLow-link] rssi=%d dBm", rssi);
+  if (have_info)
+  {
+    if (info.noise_dbm > -128 && info.noise_dbm < 0)
+    {
+      Serial.printf(" noise=%d dBm", info.noise_dbm);
+    }
+    else
+    {
+      Serial.print(" noise=n/a");
+    }
+    if (info.bw_mhz > 0)
+    {
+      Serial.printf(" bw=%u MHz", info.bw_mhz);
+    }
+    else
+    {
+      Serial.print(" bw=n/a");
+    }
+    if (info.freq_100khz > 0)
+    {
+      Serial.printf(" freq=%u.%u MHz",
+                    (unsigned)(info.freq_100khz / 10),
+                    (unsigned)(info.freq_100khz % 10));
+    }
+    else
+    {
+      Serial.print(" freq=n/a");
+    }
+    Serial.printf(" last_rx=%lu ms", (unsigned long)info.last_rx_ms);
+  }
+  else
+  {
+    Serial.print(" noise=n/a bw=n/a freq=n/a");
+  }
+  Serial.println();
+}
+
 void loop()
 {
   static uint32_t last_report = 0;
@@ -319,6 +407,7 @@ void loop()
     Serial.printf("[%u][NAPT] HaLow=%s ETH=%s\r\n",millis()/1000,
                   HaLow.localIP().toString().c_str(),
                   ETH.localIP().toString().c_str());
+    printHalowLink();
   }
 
   delay(100);

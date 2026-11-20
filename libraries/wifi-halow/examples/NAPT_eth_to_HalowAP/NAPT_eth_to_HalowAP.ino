@@ -28,6 +28,7 @@
 #include "lwip/netif.h"
 #include "esp_netif.h"
 #include "esp_netif_net_stack.h"
+#include "mmipal.h"
 
 /* ------------------------ Configuration options ------------------------ */
 
@@ -194,6 +195,55 @@ void setup()
   Serial.println("W5500 Ethernet started, waiting for DHCP...");
 }
 
+static const char *staStateName(enum mmwlan_ap_sta_state state)
+{
+  switch (state)
+  {
+  case MMWLAN_AP_STA_ASSOCIATED:
+    return "ASSOCIATED";
+  case MMWLAN_AP_STA_AUTHORIZED:
+    return "AUTHORIZED";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+static void printHalowStations()
+{
+  struct mmwlan_ap_sta_status sta_list[HALOW_MAX_STAS];
+  uint8_t count = HaLow.getStationList(sta_list, HALOW_MAX_STAS);
+
+  Serial.printf("[STA] connected count: %u\r\n", count);
+  for (uint8_t i = 0; i < count; i++)
+  {
+    struct mmipal_sta_rssi rssi;
+    enum mmipal_status status = mmipal_get_sta_rssi(sta_list[i].mac_addr, &rssi);
+
+    uint32_t last_seen = mmwlan_ap_get_sta_last_seen_ms(sta_list[i].mac_addr);
+
+    Serial.printf("[STA %u] %02X:%02X:%02X:%02X:%02X:%02X state=%s aid=%u last_80211=%lu ms",
+                  i,
+                  sta_list[i].mac_addr[0], sta_list[i].mac_addr[1],
+                  sta_list[i].mac_addr[2], sta_list[i].mac_addr[3],
+                  sta_list[i].mac_addr[4], sta_list[i].mac_addr[5],
+                  staStateName(sta_list[i].state),
+                  (unsigned)sta_list[i].aid,
+                  (unsigned long)last_seen);
+
+    if (status == MMIPAL_SUCCESS)
+    {
+      Serial.printf(" rssi=%d dBm noise=%d dBm bw=%u MHz freq=%lu kHz last_data_rx=%lu ms\r\n",
+                    rssi.rssi, rssi.noise_dbm, rssi.bw_mhz,
+                    (unsigned long)rssi.freq_100khz * 100UL,
+                    (unsigned long)rssi.last_rx_ms);
+    }
+    else
+    {
+      Serial.println(" rssi/noise: no recent data");
+    }
+  }
+}
+
 void loop()
 {
   static uint32_t last_report = 0;
@@ -205,6 +255,7 @@ void loop()
     Serial.printf("[%u][NAPT] ETH=%s HaLow AP=%s\r\n",millis()/1000,
                   ETH.localIP().toString().c_str(),
                   HaLow.localIP().toString().c_str());
+    printHalowStations();
   }
 
   delay(100);

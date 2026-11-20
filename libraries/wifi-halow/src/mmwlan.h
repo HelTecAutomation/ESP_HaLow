@@ -2300,6 +2300,16 @@ enum mmwlan_status mmwlan_ap_get_sta_status(const uint8_t *sta_addr,
                                             struct mmwlan_ap_sta_status *sta_status);
 
 /**
+ * Get the time since the last 802.11 frame was seen from a station.
+ *
+ * @param[in] sta_addr  MAC address of the station.
+ *
+ * @returns Milliseconds since the last receive or acknowledged transmit for
+ *          the station, or 0 if the station is not known.
+ */
+uint32_t mmwlan_ap_get_sta_last_seen_ms(const uint8_t *sta_addr);
+
+/**
  * Arguments data structure for @ref mmwlan_ap_enable().
  *
  * This structure should be initialized using @ref MMWLAN_AP_ARGS_INIT for sensible

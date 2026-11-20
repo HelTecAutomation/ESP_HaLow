@@ -73,17 +73,20 @@ static void printStaStatus()
     struct mmipal_sta_rssi rssi;
     enum mmipal_status status = mmipal_get_sta_rssi(sta_list[i].mac_addr, &rssi);
 
-    Serial.printf("[STA %u] %02X:%02X:%02X:%02X:%02X:%02X state=%s aid=%u",
+    uint32_t last_seen = mmwlan_ap_get_sta_last_seen_ms(sta_list[i].mac_addr);
+
+    Serial.printf("[STA %u] %02X:%02X:%02X:%02X:%02X:%02X state=%s aid=%u last_80211=%lu ms",
                   i,
                   sta_list[i].mac_addr[0], sta_list[i].mac_addr[1],
                   sta_list[i].mac_addr[2], sta_list[i].mac_addr[3],
                   sta_list[i].mac_addr[4], sta_list[i].mac_addr[5],
                   staStateName(sta_list[i].state),
-                  (unsigned)sta_list[i].aid);
+                  (unsigned)sta_list[i].aid,
+                  (unsigned long)last_seen);
 
     if (status == MMIPAL_SUCCESS)
     {
-      Serial.printf(" rssi=%d dBm noise=%d dBm bw=%u MHz freq=%lu kHz last_rx=%lu ms\n",
+      Serial.printf(" rssi=%d dBm noise=%d dBm bw=%u MHz freq=%lu kHz last_data_rx=%lu ms\n",
                     rssi.rssi, rssi.noise_dbm, rssi.bw_mhz,
                     (unsigned long)rssi.freq_100khz * 100UL,
                     (unsigned long)rssi.last_rx_ms);
