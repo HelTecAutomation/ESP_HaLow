@@ -106,6 +106,53 @@ void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info) {
 }
 
 
+static const char *staStateName(enum mmwlan_ap_sta_state state)
+{
+  switch (state)
+  {
+    case MMWLAN_AP_STA_ASSOCIATED:
+      return "ASSOCIATED";
+    case MMWLAN_AP_STA_AUTHORIZED:
+      return "AUTHORIZED";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+static void printStaStatus()
+{
+  // RSSI/noise are updated when data frames are received from the STA.
+  struct mmwlan_ap_sta_status sta_list[MMWLAN_AP_MAX_STAS_LIMIT];
+  uint8_t count = HaLow.getStationList(sta_list, MMWLAN_AP_MAX_STAS_LIMIT);
+
+  Serial.printf("[STA] connected count: %u\n", count);
+  for (uint8_t i = 0; i < count; i++)
+  {
+    struct mmipal_sta_rssi rssi;
+    enum mmipal_status status = mmipal_get_sta_rssi(sta_list[i].mac_addr, &rssi);
+
+    Serial.printf("[STA %u] %02X:%02X:%02X:%02X:%02X:%02X state=%s aid=%u",
+                  i,
+                  sta_list[i].mac_addr[0], sta_list[i].mac_addr[1],
+                  sta_list[i].mac_addr[2], sta_list[i].mac_addr[3],
+                  sta_list[i].mac_addr[4], sta_list[i].mac_addr[5],
+                  staStateName(sta_list[i].state),
+                  (unsigned)sta_list[i].aid);
+
+    if (status == MMIPAL_SUCCESS)
+    {
+      Serial.printf(" rssi=%d dBm noise=%d dBm bw=%u MHz freq=%lu kHz last_rx=%lu ms\n",
+                    rssi.rssi, rssi.noise_dbm, rssi.bw_mhz,
+                    (unsigned long)rssi.freq_100khz * 100UL,
+                    (unsigned long)rssi.last_rx_ms);
+    }
+    else
+    { 
+      Serial.println(" rssi/noise: no recent data frame");
+    }
+  }
+}
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -168,6 +215,8 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  delay(1000);
+  delay(30000);
+  Serial.printf("[%u]\r\n",millis()/1000);
+  printStaStatus();
 }
 
